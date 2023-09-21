@@ -21,7 +21,9 @@
     <None Include="README.md" />
   </ItemGroup>
 
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\RandomUtilities\RandomUtilities.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="7.0.400" />
