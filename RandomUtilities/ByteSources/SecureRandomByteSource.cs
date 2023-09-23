@@ -15,21 +15,21 @@ namespace RandomUtilities.ByteSources;
 /// <summary>
 /// A byte source directly backed by the secure random generator
 /// </summary>
-public class SecureRandomByteSource : ByteSource
+public class SecureRandomByteSource: ByteSource
 {
 
-    /// <summary>
-    /// Create a new SecureRandomByteSource
-    /// </summary>
-    public SecureRandomByteSource()
-    {
-    }
+  /// <summary>
+  /// Create a new SecureRandomByteSource
+  /// </summary>
+  public SecureRandomByteSource()
+  {
+  }
 
-    /// <summary>
-    /// Fill the span with cryptographically strong random bytes
-    /// </summary>
-    public override void ReadBytes(Span<byte> bytes)
-    {
-        RandomNumberGenerator.Fill(bytes);
-    }
+  /// <summary>
+  /// Fill the span with cryptographically strong random bytes
+  /// </summary>
+  public override void ReadBytes(Span<byte> bytes)
+  {
+    RandomNumberGenerator.Fill(bytes);
+  }
 }
