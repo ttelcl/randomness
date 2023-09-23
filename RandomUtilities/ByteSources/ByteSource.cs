@@ -24,6 +24,23 @@ public abstract class ByteSource
   }
 
   /// <summary>
+  /// Return a new <see cref="SecureRandomByteSource"/> instance
+  /// </summary>
+  public static ByteSource Random()
+  {
+    return new SecureRandomByteSource();
+  }
+
+  /// <summary>
+  /// Return a new <see cref="CycleByteSource"/> instance
+  /// (for testing purposes)
+  /// </summary>
+  public static ByteSource Cycle()
+  {
+    return new CycleByteSource();
+  }
+
+  /// <summary>
   /// Return the next byte. The default implementation is a wrapper around
   /// <see cref="ReadBytes"/>.
   /// </summary>
@@ -45,5 +62,4 @@ public abstract class ByteSource
   /// of bytes to read.
   /// </param>
   public abstract void ReadBytes(Span<byte> bytes);
-
 }
