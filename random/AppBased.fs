@@ -2,11 +2,10 @@
 
 open System
 
-open RandomUtilities
+open RandomUtilities.ByteSources
 
 open ColorPrint
 open CommonTools
-open RandomUtilities.ByteSources
 
 type BaseNames =
   | HexLow

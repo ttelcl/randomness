@@ -27,6 +27,9 @@ let rec run arglist =
     rest |> AppBased.runBase AppBased.BaseNames.Base32
   | "base64" :: rest ->
     rest |> AppBased.runBase AppBased.BaseNames.Base64
+  | "characters" :: rest 
+  | "chars" :: rest ->
+    rest |> AppCharacters.run
   | x :: _ ->
     cp $"\frUnrecognized command \fo{x}\f0."
     1
