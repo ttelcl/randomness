@@ -320,4 +320,19 @@ public static class ByteSourceExtensions
     }
   }
 
+  /// <summary>
+  /// Return a string formed by indexing the <paramref name="alphabet"/> randomly 
+  /// <paramref name="characterCount"/> times.
+  /// </summary>
+  public static string RandomAlphabetProjection(this BitSource randomSource, string alphabet, int characterCount)
+  {
+    var sb = new StringBuilder();
+    for(var i = 0; i < characterCount; i++)
+    {
+      var index = randomSource.RandomInteger(alphabet.Length-1);
+      sb.Append(alphabet[index]);
+    }
+    return sb.ToString();
+  }
+
 }

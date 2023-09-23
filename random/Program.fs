@@ -19,6 +19,14 @@ let rec run arglist =
     0  // program return status code to the operating system; 0 == "OK"
   | "guid" :: rest ->
     rest |> AppGuid.run
+  | "hex" :: rest ->
+    rest |> AppBased.runBase AppBased.BaseNames.HexLow
+  | "HEX" :: rest ->
+    rest |> AppBased.runBase AppBased.BaseNames.HexUpp
+  | "base32" :: rest ->
+    rest |> AppBased.runBase AppBased.BaseNames.Base32
+  | "base64" :: rest ->
+    rest |> AppBased.runBase AppBased.BaseNames.Base64
   | x :: _ ->
     cp $"\frUnrecognized command \fo{x}\f0."
     1
