@@ -1,0 +1,4 @@
+﻿# Combines other word lists
+
+{colors}
+
