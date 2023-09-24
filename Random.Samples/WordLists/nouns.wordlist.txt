@@ -1,3 +1,6 @@
 ﻿# A collection of nouns (primarily references to other word lists)
 
+{animals}
 {fruits}
+{vehicles}
+

@@ -24,14 +24,20 @@ type private WordsOptions = {
   Separator: string
 }
 
-let private listLists (wlc:WordListCache) =
+let private listLists showDetails (wlc:WordListCache) =
   cp "\foAvailable word lists\f0:"
   let listNames = 
     wlc.ListNames()
     |> Seq.sort
     |> Seq.toArray
   for listName in listNames do
-    cp $"  \fg{listName}\f0"
+    if showDetails then
+      let wl = wlc.FindList(listName, wlc)
+      let count = wl.Words.Count
+      let entropyBits = log(float(count)) / log(2.0)
+      cp $"\fg%-14s{listName}\f0 \fb%4d{count}\f0 words, \fc%8.3f{entropyBits}\f0 bits per word."
+    else
+      cp $"\fg%-14s{listName}\f0"
     
 let private listLoader (wlc:WordListCache) expression =
   if WordList.IsValidLabel(expression) |> not then
@@ -42,7 +48,7 @@ let private listLoader (wlc:WordListCache) expression =
     let words = wlc.FindList(label, wlc)
     if words = null then
       cp $"\frList not found\f0: \fo{label}\f0"
-      wlc |> listLists
+      wlc |> listLists false
       failwith "list not found"
     words
   // expressions are NYI, treat expression as plain list ID, as placeholder
@@ -104,7 +110,7 @@ let run args =
     1
   | Some(o) ->
     if o.ListLists then
-      wlc |> listLists
+      wlc |> listLists true
       1
     else
       if verbose then
