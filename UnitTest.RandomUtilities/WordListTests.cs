@@ -33,7 +33,6 @@ public class WordListTests
     _sink.WriteLine(String.Join(" ", fruitcolors.Words.Take(7)) + "...");
   }
 
-
   [Fact]
   public void CanLoadCompositeList()
   {
@@ -48,6 +47,19 @@ public class WordListTests
     var wordset = new HashSet<string>(colors.Words);
     Assert.Contains("green", wordset);
     Assert.Contains("orange", wordset);
+  }
+
+  [Fact]
+  public void CanListLists()
+  {
+    var wlc =
+      WordListCache.Create()
+      .AddApplicationFolder("WordLists")
+      .AddCurrentFolder();
+    var lists = wlc.ListNames().ToHashSet(StringComparer.InvariantCultureIgnoreCase);
+    Assert.Contains("colors", lists);
+    Assert.Contains("fruitcolors", lists);
+    Assert.Contains("words", lists);
   }
 
 
