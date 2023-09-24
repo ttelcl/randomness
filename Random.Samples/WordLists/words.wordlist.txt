@@ -1,4 +1,5 @@
 ﻿# Combines other word lists
 
-{colors}
+{adjectives}
+{nouns}
 

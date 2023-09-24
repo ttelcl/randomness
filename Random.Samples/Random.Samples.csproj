@@ -8,16 +8,28 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="WordLists\adjectives.wordlist.txt" />
     <None Remove="WordLists\colors.wordlist.txt" />
     <None Remove="WordLists\fruitcolors.wordlist.txt" />
+    <None Remove="WordLists\fruits.wordlist.txt" />
+    <None Remove="WordLists\nouns.wordlist.txt" />
     <None Remove="WordLists\words.wordlist.txt" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="WordLists\adjectives.wordlist.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="WordLists\fruitcolors.wordlist.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="WordLists\colors.wordlist.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="WordLists\fruits.wordlist.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="WordLists\nouns.wordlist.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="WordLists\words.wordlist.txt">
