@@ -264,6 +264,7 @@ seahorse
 seal
 shark
 sheep
+shellfish
 shrew
 shrimp
 siamese

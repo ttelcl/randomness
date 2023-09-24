@@ -35,7 +35,7 @@ let private listLists showDetails (wlc:WordListCache) =
       let wl = wlc.FindList(listName, wlc)
       let count = wl.Words.Count
       let entropyBits = log(float(count)) / log(2.0)
-      cp $"\fg%-14s{listName}\f0 \fb%4d{count}\f0 words, \fc%8.3f{entropyBits}\f0 bits per word."
+      cp $"\fg%-20s{listName}\f0 \fb%4d{count}\f0 words, \fc%8.3f{entropyBits}\f0 bits per word."
     else
       cp $"\fg%-14s{listName}\f0"
     

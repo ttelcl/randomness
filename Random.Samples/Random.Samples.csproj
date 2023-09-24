@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="WordLists\adjectives-other.wordlist.txt" />
     <None Remove="WordLists\adjectives.wordlist.txt" />
     <None Remove="WordLists\animals.wordlist.txt" />
     <None Remove="WordLists\colors.wordlist.txt" />
@@ -20,6 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="WordLists\adjectives-other.wordlist.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="WordLists\adjectives.wordlist.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

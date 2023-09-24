@@ -1,15 +1,35 @@
 ﻿# A list of vehicle names
 
 airplane
+ambulance
 bicycle
 boat
+bulldozer
+bus
+camper
+canoe
 car
+caravan
+carriage
 coach
+dingy
+helicopter
+limousine
+lorry
 metro
+monorail
 moped
 motorbike
 rocket
+scooter
 ship
 submarine
+subway
+taxi
+tractor
 train
 tram
+tricycle
+truck
+unicycle
+wheelbarrow

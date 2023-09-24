@@ -1,5 +1,6 @@
 ﻿# A collection of adjectives (primarily references to other word lists)
 
+{adjectives-other}
 {colors}
 {sizes}
 
