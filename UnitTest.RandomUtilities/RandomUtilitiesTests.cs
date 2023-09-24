@@ -10,11 +10,11 @@ using RandomUtilities.ByteSources;
 
 namespace UnitTest.RandomUtilities;
 
-public class UnitTest1
+public class RandomUtilitiesTests
 {
   private ITestOutputHelper _sink;
 
-  public UnitTest1(ITestOutputHelper sink)
+  public RandomUtilitiesTests(ITestOutputHelper sink)
   {
     _sink = sink;
   }
