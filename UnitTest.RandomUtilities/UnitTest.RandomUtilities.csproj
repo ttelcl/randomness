@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Random.Samples\Random.Samples.csproj" />
     <ProjectReference Include="..\RandomUtilities\RandomUtilities.csproj" />
   </ItemGroup>
 

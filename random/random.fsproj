@@ -11,10 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="WordLists\words.wordlist.txt" />
-    <Content Include="WordLists\colors.wordlist.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Compile Include="ColorPrint.fs" />
     <Compile Include="CommonTools.fs" />
     <Compile Include="PrintUtils.fs" />
@@ -28,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Random.Samples\Random.Samples.csproj" />
     <ProjectReference Include="..\RandomUtilities\RandomUtilities.csproj" />
   </ItemGroup>
 
