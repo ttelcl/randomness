@@ -26,8 +26,8 @@ public class WordList
   public WordList(string label, IEnumerable<string> words)
   {
     Label = label;
-    var list = words.ToList();
-    Words = list.AsReadOnly();
+    var wordset = new HashSet<string>(words, StringComparer.InvariantCultureIgnoreCase);
+    Words = wordset;
     if(!IsValidLabel(label))
     {
       throw new ArgumentOutOfRangeException(nameof(label), "Not a valid word list name");
@@ -49,7 +49,7 @@ public class WordList
   public string Label { get; init; }
 
   /// <summary>
-  /// The words in the list
+  /// The words in the list, as a case insensitive set
   /// </summary>
-  public IReadOnlyList<string> Words { get; init; }
+  public IReadOnlySet<string> Words { get; init; }
 }

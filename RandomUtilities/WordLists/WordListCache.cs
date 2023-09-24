@@ -33,6 +33,16 @@ public class WordListCache: WordListProvider
   }
 
   /// <summary>
+  /// Create a new <see cref="WordListCache"/>.
+  /// Equivalent to the constructor, but using a syntax that better fits
+  /// fluent configuration
+  /// </summary>
+  public static WordListCache Create()
+  {
+    return new WordListCache();
+  }
+
+  /// <summary>
   /// Add a child provider. 
   /// Returns this instance itself for fluent configuration.
   /// </summary>
@@ -63,11 +73,11 @@ public class WordListCache: WordListProvider
   /// </param>
   public WordListCache AddApplicationFolder(string relativePath = "")
   {
-    var asm = Assembly.GetEntryAssembly();
-    return asm != null
-      ? AddFolderChild(Path.Combine(asm.Location, relativePath ?? String.Empty))
-      : throw new InvalidOperationException(
-        "Cannot add application folder because it is not available");
+    var asm = Assembly.GetEntryAssembly() ?? throw new InvalidOperationException(
+      "Cannot add application folder because it is not available");
+    var asmdir = Path.GetDirectoryName(asm.Location) ?? throw new InvalidOperationException(
+      "Cannot add application folder because its folder name is unknown");
+    return AddFolderChild(Path.Combine(asmdir, relativePath ?? String.Empty));
   }
 
   /// <summary>
@@ -155,7 +165,7 @@ public class WordListCache: WordListProvider
     }
     foreach(var child in _providers)
     {
-      foreach (var name in child.ListNames())
+      foreach(var name in child.ListNames())
       {
         names.Add(name);
       }

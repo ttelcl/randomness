@@ -1,0 +1,13 @@
+﻿# A collection of english words that are both color names and fruit names
+# Hand-picked from https://en.wikipedia.org/wiki/List_of_colors_(alphabetical)
+
+almond
+apricot
+chestnut
+mandarin
+mango
+orange
+peach
+plum
+tangerine
+

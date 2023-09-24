@@ -56,7 +56,7 @@ public class DirectoryWordListProvider: WordListProvider
   {
     if(!WordList.IsValidLabel(label))
     {
-      throw new ArgumentOutOfRangeException(nameof(label));
+      throw new ArgumentOutOfRangeException(nameof(label), $"Not a valid label: '{label}'");
     }
     var shortFileName = $"{label}.wordlist.txt";
     var fileName = Path.Combine(Folder, shortFileName);
@@ -76,7 +76,7 @@ public class DirectoryWordListProvider: WordListProvider
               throw new InvalidOperationException(
                 $"Invalid list reference '{l}' in word list {fileName}");
             }
-            var reference = l[1..^2];
+            var reference = l[1..^1];
             if(!WordList.IsValidLabel(reference))
             {
               throw new InvalidOperationException(
@@ -87,7 +87,7 @@ public class DirectoryWordListProvider: WordListProvider
               throw new InvalidOperationException(
                 $"Cannot resolve reference '{l}' because no reference resolver was provided");
             }
-            var refList = referenceResolver.FindList(l, referenceResolver);
+            var refList = referenceResolver.FindList(reference, referenceResolver);
             if(refList == null)
             {
               throw new InvalidOperationException(

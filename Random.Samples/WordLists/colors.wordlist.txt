@@ -2,12 +2,13 @@
 # Derived from https://en.wikipedia.org/wiki/List_of_colors_(alphabetical)
 # (but only including single words, and then only those I recognized as a color)
 
+{fruitcolors}
 alabaster
-almond
+#almond
 amaranth
 amber
 amethyst
-apricot
+#apricot
 aquamarine
 azure
 beige
@@ -21,7 +22,7 @@ carmine
 cerise
 cerulean
 chartreuse
-chestnut
+#chestnut
 citrine
 crimson
 cyan
@@ -40,21 +41,21 @@ lilac
 magenta
 mahogany
 malachite
-mandarin
-mango
+#mandarin
+#mango
 maroon
 mauve
 mocha
 ochre
 onyx
 opal
-orange
+#orange
 orchid
-peach
+#peach
 peridot
 periwinkle
 pink
-plum
+#plum
 purple
 red
 ruby
@@ -65,7 +66,7 @@ sepia
 sienna
 silver
 tan
-tangerine
+#tangerine
 teal
 tawny
 topaz
