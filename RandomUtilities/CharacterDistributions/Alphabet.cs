@@ -93,4 +93,22 @@ public class Alphabet
     return sample.All(ch => GetCharacterCode(ch) >= minIndex);
   }
 
+  /// <summary>
+  /// Create a new buffer for recording a distribution of fragments of words
+  /// whose letters are all in this alphabet. Use its AddWord and Add methods
+  /// to add words or fragments.
+  /// </summary>
+  /// <param name="order">
+  /// The length of the word fragment prefixes (i.e. the length of the fragments minus 1).
+  /// Passing 0 would record a letter distribution directly, 1 would record
+  /// distributions of the final letter of a letter pair, etc.
+  /// </param>
+  /// <returns>
+  /// A new empty <see cref="FragmentDistribution"/>, ready to record new
+  /// words and word fragments.
+  /// </returns>
+  public FragmentDistribution CreateDistributionRecorder(int order) 
+  {
+    return new FragmentDistribution(this, order);
+  }
 }

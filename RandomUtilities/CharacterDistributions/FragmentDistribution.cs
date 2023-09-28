@@ -59,6 +59,23 @@ public class FragmentDistribution
   }
 
   /// <summary>
+  /// Enumerate all non-empty distributions
+  /// </summary>
+  /// <returns>
+  /// The list of all non-empty distributions plus their fragment key
+  /// </returns>
+  public IEnumerable<KeyValuePair<string, AlphabetCharacterDistribution>> AllDistributions()
+  {
+    foreach(var kvp in _distributions)
+    {
+      if(kvp.Value != null && kvp.Value.Total > 0)
+      {
+        yield return kvp;
+      }
+    }
+  }
+
+  /// <summary>
   /// Add a new sample to this distribution
   /// </summary>
   /// <param name="prefix">
