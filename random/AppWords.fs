@@ -1,6 +1,7 @@
 ﻿module AppWords
 
 open System
+open System.Collections.Generic
 open System.Text
 
 open RandomUtilities.ByteSources
@@ -8,7 +9,6 @@ open RandomUtilities.WordLists
 
 open ColorPrint
 open CommonTools
-open System.Collections.Generic
 
 type private PreparedList = {
   Name: string
