@@ -5,9 +5,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using RandomUtilities.ByteSources;
 
 namespace RandomUtilities.CharacterDistributions;
 
@@ -59,6 +62,65 @@ public class FragmentDistribution
   }
 
   /// <summary>
+  /// Save the content of this object in *.fragments-?.csv format.
+  /// Boundary characters are translated into '_' characters.
+  /// </summary>
+  public void SaveFragmentCsv(TextWriter w)
+  {
+    w.WriteLine("fragment,count");
+    var buckets = _distributions.ToList();
+    buckets.Sort((kvp1, kvp2) => StringComparer.Ordinal.Compare(kvp1.Key, kvp2.Key));
+    foreach(var kvp in buckets)
+    {
+      var distribution = kvp.Value.Distribution;
+      for(var i = 0; i<distribution.Count; i++)
+      {
+        var value = distribution[i];
+        if(value > 0)
+        {
+          var letter = i==0 ? '_' : Alphabet.Characters[i];
+          w.WriteLine($"{kvp.Key.Replace(Alphabet.Boundary, '_')}{letter},{value}");
+        }
+      }
+    }
+  }
+
+  /// <summary>
+  /// Read the content of a CSV file in *.fragments-?.csv style.
+  /// The '_' in the file are changed to <see cref="Alphabet"/>.<see cref="Alphabet.Boundary"/>
+  /// </summary>
+  public void ReadFragmentCsv(TextReader r)
+  {
+    var header = r.ReadLine();
+    if(header != "fragment,count")
+    {
+      throw new InvalidDataException(
+        "Expecting the header line to be 'fragment,count'");
+    }
+    string? line;
+    while((line = r.ReadLine()) != null)
+    {
+      if(!String.IsNullOrEmpty(line))
+      {
+        var parts = line.Split(',');
+        if(parts.Length != 2)
+        {
+          throw new InvalidDataException(
+            $"Unexpected data format in line '{line}'");
+        }
+        var fragment = parts[0].Replace('_', Alphabet.Boundary);
+        if(fragment.Length != Order+1)
+        {
+          throw new InvalidOperationException(
+            $"The fragment file is not compatible. File has order {fragment.Length-1} instead of {Order}");
+        }
+        var count = Int32.Parse(parts[1]);
+        Add(fragment, count);
+      }
+    }
+  }
+
+  /// <summary>
   /// Enumerate all non-empty distributions
   /// </summary>
   /// <returns>
@@ -92,7 +154,7 @@ public class FragmentDistribution
     var index = Alphabet.GetCharacterCode(suffix);
     if(index < 0)
     {
-      throw new ArgumentOutOfRangeException(nameof(suffix), 
+      throw new ArgumentOutOfRangeException(nameof(suffix),
         $"The character '{suffix}' is not in the target alphabet");
     }
     if(!Alphabet.IsRepresentable(prefix, true))
@@ -155,5 +217,29 @@ public class FragmentDistribution
     }
   }
 
-
+  /// <summary>
+  /// Convert this object to the JSON serializable <see cref="LetterDistributionDto"/>
+  /// </summary>
+  public LetterDistributionDto ToLetterDistibutionDto()
+  {
+    var map = new Dictionary<string, Dictionary<string, int>>(StringComparer.Ordinal);
+    foreach(var kvp in _distributions)
+    {
+      var prefix = kvp.Key;
+      var acd = kvp.Value;
+      var distribution = acd.Distribution;
+      var inner = new Dictionary<string, int>(StringComparer.Ordinal);
+      map[prefix] = inner;
+      for(var i = 0; i<distribution.Count; i++)
+      {
+        var count = distribution[i];
+        if(count > 0)
+        {
+          var letter = Alphabet.Characters[i];
+          inner[letter.ToString()] = count;
+        }
+      }
+    }
+    return new LetterDistributionDto(Alphabet.Characters[1..], Order, map, Alphabet.Boundary);
+  }
 }

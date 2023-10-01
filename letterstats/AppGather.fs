@@ -53,12 +53,9 @@ let private runGather o =
   else
     cp $"Added \fb{collector.Total}\f0 fragments"
     let onm1 = $"{o.OutTag}.wordstats-{o.Order}.info.csv"
-    let onm2 = $"{o.OutTag}.{o.Order}.fragment-counts.csv"
     do
       use w1 = onm1 |> startFile
       fprintfn w1 "prefix,letter,count,fraction,entropy,surprisal"
-      use w2 = onm2 |> startFile
-      fprintfn w2 "fragment,count"
       for kvp in collector.AllDistributions() |> Seq.sortBy (fun kvp -> kvp.Key) do
         let prefix = kvp.Key
         let acd = kvp.Value
@@ -72,9 +69,19 @@ let private runGather o =
             let surprisalText = if surprisalValue.HasValue then $"%.5f{surprisalValue.Value}" else ""
             let fraction = float(value) / float(acd.Total)
             fprintfn w1 $"{prefix},{letter},{value},%.5f{fraction},%.5f{entropy},{surprisalText}"
-            fprintfn w2 $"{prefix}{letter},{value}"
     onm1 |> finishFile
+    let onm2 = $"{o.OutTag}.fragments-{o.Order}.csv"
+    do
+      use w2 = onm2 |> startFile
+      collector.SaveFragmentCsv(w2)
     onm2 |> finishFile
+    let onm3 = $"{o.OutTag}.fragments-{o.Order}.json"
+    do
+      use w3 = onm3 |> startFile
+      let dto = collector.ToLetterDistibutionDto()
+      let json = dto.ToJson(true)
+      w3.WriteLine(json)
+    onm3 |> finishFile
     0
 
 let run args =

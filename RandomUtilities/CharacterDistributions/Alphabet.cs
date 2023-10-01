@@ -33,6 +33,11 @@ public class Alphabet
     string characters,
     char boundary = ' ')
   {
+    if(characters.IndexOf(boundary) >= 0)
+    {
+      throw new ArgumentException(
+        $"The boundary character must not be part of the alphabet");
+    }
     var carr = characters.ToCharArray();
     Array.Sort(carr);
     Characters = new String(boundary, 1) + new String(carr);
@@ -48,6 +53,16 @@ public class Alphabet
   /// The set of characters, including the boundary marker character as first character.
   /// </summary>
   public string Characters { get; init; }
+
+  /// <summary>
+  /// The usual lower case alphabet characters for english
+  /// </summary>
+  public const string EnglishCharacters = "abcdefghijklmnopqrstuvwxyz";
+
+  /// <summary>
+  /// The usual lower case alphabet characters for finnish
+  /// </summary>
+  public const string FinnishCharacters = "abcdefghijklmnopqrstuvwxyzäöå";
 
   /// <summary>
   /// The number of characters in <see cref="Characters"/> (including the boundary character)
