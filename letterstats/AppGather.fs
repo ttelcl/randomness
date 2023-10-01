@@ -15,13 +15,14 @@ type private GatherOptions = {
   Order: int
   AlphabetSpec: string
   Boundary: char
-  Source: WordSource option
+  Sources: WordSource list
   OutTag: string
+  AllowShort: bool
 }
 
-let private enumerateWords o =
-  match o.Source with
-  | Some(ListSource(wordlistLabel)) ->
+let private enumerateWordsInSource wordSource =
+  match wordSource with
+  | ListSource(wordlistLabel) ->
     let wlc = 
       WordListCache.Create()
         .AddApplicationFolder("WordLists")
@@ -29,28 +30,36 @@ let private enumerateWords o =
     if wl = null then
       failwith $"Unknown word list or invalid word list expression: '{wordlistLabel}'"
     wl.Words :> seq<string>
-  | None ->
-    failwith "No word source specified (-list)"
 
 let private runGather o =
   let alphabet = new Alphabet(o.AlphabetSpec, o.Boundary)
-  let words =
-    o
-    |> enumerateWords
-    |> Seq.filter (fun word -> alphabet.IsRepresentable(word, false))
   let collector = new FragmentDistribution(alphabet, o.Order)
-  for word in words do
-    collector.AddWord(word, 1)
+  let weight = 1
+  for source in o.Sources do
+    let words =
+      source
+      |> enumerateWordsInSource
+      |> Seq.filter (fun word -> alphabet.IsRepresentable(word, false))
+    let words =
+      if o.AllowShort then
+        words
+      else
+        words |> Seq.filter (fun word -> word.Length >= o.Order)
+    for word in words do
+      collector.AddWord(word, weight)
   if collector.Total < 1 then
-    cp "\frNo acceptable words found in the source\f0."
+    cp "\frNo acceptable words found in the source(s)\f0."
     1
   else
     cp $"Added \fb{collector.Total}\f0 fragments"
-    let onm = $"{o.OutTag}.wordstats-{o.Order}.csv"
+    let onm1 = $"{o.OutTag}.wordstats-{o.Order}.info.csv"
+    let onm2 = $"{o.OutTag}.{o.Order}.fragment-counts.csv"
     do
-      use w = onm |> startFile
-      fprintfn w "prefix,letter,count,fraction,entropy,surprisal"
-      for kvp in collector.AllDistributions() do
+      use w1 = onm1 |> startFile
+      fprintfn w1 "prefix,letter,count,fraction,entropy,surprisal"
+      use w2 = onm2 |> startFile
+      fprintfn w2 "fragment,count"
+      for kvp in collector.AllDistributions() |> Seq.sortBy (fun kvp -> kvp.Key) do
         let prefix = kvp.Key
         let acd = kvp.Value
         let values = acd.Distribution
@@ -62,8 +71,10 @@ let private runGather o =
             let surprisalValue = acd.Surprisal(idx)
             let surprisalText = if surprisalValue.HasValue then $"%.5f{surprisalValue.Value}" else ""
             let fraction = float(value) / float(acd.Total)
-            fprintfn w $"{prefix},{letter},{value},%.5f{fraction},%.5f{entropy},{surprisalText}"
-    onm |> finishFile
+            fprintfn w1 $"{prefix},{letter},{value},%.5f{fraction},%.5f{entropy},{surprisalText}"
+            fprintfn w2 $"{prefix}{letter},{value}"
+    onm1 |> finishFile
+    onm2 |> finishFile
     0
 
 let run args =
@@ -74,9 +85,9 @@ let run args =
       rest |> parseMore o
     | "-h" :: _ ->
       None
-    | "-list" :: label :: rest ->
+    | "-words" :: label :: rest ->
       let lst = WordSource.ListSource(label)
-      rest |> parseMore {o with Source = Some(lst)}
+      rest |> parseMore {o with Sources = lst :: o.Sources}
     | "-a" :: alphabetSpec :: rest ->
       rest |> parseMore {o with AlphabetSpec = alphabetSpec}
     | "-b" :: boundary :: rest ->
@@ -88,11 +99,13 @@ let run args =
       rest |> parseMore {o with Order = order}
     | "-tag" :: tag :: rest ->
       rest |> parseMore {o with OutTag = tag}
+    | "-short" :: rest ->
+      rest |> parseMore {o with AllowShort = true}
     | [] ->
       if o.Order < 0 then
         failwith "No order (-n) specified"
-      if o.Source |> Option.isNone then
-        failwith "No word source specified (-list)"
+      if o.Sources |> List.isEmpty then
+        failwith "No word source(s) specified (-words)"
       Some(o)
     | x :: _ ->
       cp $"\frUnrecognized argument\f0 '\fo{x}\f0'"
@@ -101,8 +114,9 @@ let run args =
     Order = -1
     AlphabetSpec = "abcdefghijklmnopqrstuvwxyz"
     Boundary = '_'
-    Source = None
+    Sources = []
     OutTag = "out"
+    AllowShort = false
   }
   match oo with
   | Some(o) ->
