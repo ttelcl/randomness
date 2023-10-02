@@ -10,6 +10,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using RandomUtilities.ByteSources;
+
 namespace RandomUtilities.CharacterDistributions;
 
 /// <summary>
@@ -82,6 +84,69 @@ public class LetterDistribution
   /// The prefix (context) length used
   /// </summary>
   public int Order { get; init; }
+
+  /// <summary>
+  /// Get the seed string (<see cref="Order"/> repetitions of the boundary character)
+  /// </summary>
+  public string Seed { get => new(Alphabet.Boundary, Order); }
+
+  /// <summary>
+  /// Generate a randon word using this distribution and the
+  /// random bit source
+  /// </summary>
+  public string RandomWord(BitSource bitSource)
+  {
+    var context = Seed;
+    var sb = new StringBuilder();
+    LetterCountCell cell;
+    do
+    {
+      cell = RandomCell(bitSource, context);
+      context = cell.NextPrefix;
+      if(cell.Letter == Alphabet.Boundary)
+      {
+        return sb.ToString();
+      }
+      sb.Append(cell.Letter);
+    } while(true);
+  }
+
+  /// <summary>
+  /// Randomly pick the next cell given the specified context
+  /// </summary>
+  /// <param name="bitSource">
+  /// The source of randomness
+  /// </param>
+  /// <param name="context">
+  /// The context string
+  /// </param>
+  /// <returns>
+  /// A randomly selected cell amongst the list of cells for the context
+  /// </returns>
+  public LetterCountCell RandomCell(BitSource bitSource, string context)
+  {
+    if(!_distributionMap.TryGetValue(context, out var cells))
+    {
+      throw new InvalidOperationException(
+        $"'{context}' is not a valid context string for this distribution");
+    }
+    if(cells.Length == 1)
+    {
+      return cells[0];
+    }
+    var max = cells[^1].Cumulative;
+    var pick = bitSource.RandomInteger(max-1);
+    // Console.WriteLine($"  Pick: {pick} / {max}");
+    foreach(var cell in cells)
+    {
+      if(cell.Cumulative > pick)
+      {
+        return cell;
+      }
+    }
+    throw new InvalidOperationException(
+      $"Internal error: max {max} <= pick {pick} ???");
+  }
 
   /// <summary>
   /// Convert this object into a serializable form

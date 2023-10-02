@@ -16,6 +16,8 @@ let usage detail =
   cp "  \fg-tag\f0 <\fcoutput-tag\f0>  The tag to derive name of the output files"
   cp "  \fg-short\f0\fx\fx             Allow short words to be recorded"
   cp ""
+  cp "\foletterstats generate \fg-f\f0 <\fcfile.n.word-fragments.json\f0> [\fg-n\f0 <\fcrepeat\f0>]"
+  cp ""
   cp "\fyCommon options\f0:"
   cp "\fg-v               \f0Verbose mode"
 

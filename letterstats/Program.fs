@@ -19,6 +19,8 @@ let rec run arglist =
     0  // program return status code to the operating system; 0 == "OK"
   | "gather" :: rest ->
     rest |> AppGather.run
+  | "generate" :: rest ->
+    rest |> AppGenerate.run
   | x :: _ ->
     cp $"\frUnknown command: \fo{x}\f0."
     1

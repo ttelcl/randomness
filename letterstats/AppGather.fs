@@ -75,7 +75,7 @@ let private runGather o =
       use w2 = onm2 |> startFile
       collector.SaveFragmentCsv(w2)
     onm2 |> finishFile
-    let onm3 = $"{o.OutTag}.fragments-{o.Order}.json"
+    let onm3 = $"{o.OutTag}.{o.Order}.word-fragments.json"
     do
       use w3 = onm3 |> startFile
       let dto = collector.ToLetterDistibutionDto()
