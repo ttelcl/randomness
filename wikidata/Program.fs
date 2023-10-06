@@ -20,6 +20,10 @@ let rec run arglist =
     0  // program return status code to the operating system; 0 == "OK"
   | "config" :: rest ->
     rest |> AppConfig.run
+  | "wikis" :: "list" :: rest
+  | "wiki-list" :: rest 
+  | "wikis-list" :: rest ->
+    rest |> AppWikiList.run
   | x :: _ ->
     cp $"\frUnrecognized argument\f0: \fo{x}\f0."
     usage "all"

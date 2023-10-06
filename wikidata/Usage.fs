@@ -9,6 +9,11 @@ let usage detail =
   cp ""
   cp "\fowikidata config\f0 [\fg-init \f0<\fcrepo-folder\f0>]"
   cp "   Check the configuration file and optionally initialize it if it did not exist yet"
+  cp ""
+  cp "\fowikidata wikis list\f0"
+  cp "   List known wikis"
+  cp ""
+  cp "\fyCommon options\f0:"
   cp "\fg-v               \f0Verbose mode"
 
 
