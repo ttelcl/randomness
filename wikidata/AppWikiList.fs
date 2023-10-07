@@ -30,14 +30,13 @@ let run args =
     Usage.usage "wikis list"
     1
   | Some(o) ->
-    let cfg = MachineWikiConfiguration.LoadConfiguration()
-    let repo = new WikiRepo(cfg.RepoFolder)
+    let repo = new WikiRepo()
     let wikitags = repo.WikiNames(false);
-    cp $"wiki stores in repository \fc{cfg.RepoFolder}\f0:"
+    cp $"wiki stores in repository \fc{repo.Folder}\f0:"
     if wikitags.Count = 0 then
       cp "\foNo wiki stores present yet\f0."
     else
       for wikitag in wikitags do
-        let folder = Path.Combine(cfg.RepoFolder, wikitag)
+        let folder = Path.Combine(repo.Folder, wikitag)
         cp $"  \fg{wikitag}\f0 ({folder})"
     0

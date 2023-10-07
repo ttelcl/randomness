@@ -11,6 +11,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+using WikiDataLib.Configuration;
+
 namespace WikiDataLib.Repository;
 
 /// <summary>
@@ -21,7 +23,7 @@ public class WikiRepo
   private readonly HashSet<string> _wikinames;
 
   /// <summary>
-  /// Create a new WikiRepo
+  /// Create a new WikiRepo instance on the specified folder
   /// </summary>
   public WikiRepo(string folder)
   {
@@ -33,6 +35,24 @@ public class WikiRepo
     }
     Folder = Path.GetFullPath(folder);
     WikiNames(true);
+  }
+
+  /// <summary>
+  /// Create a new WikiRepo instance on the repository folder given in
+  /// the specified <see cref="MachineWikiConfiguration"/>.
+  /// </summary>
+  public WikiRepo(MachineWikiConfiguration cfg)
+    : this(cfg.RepoFolder)
+  {
+  }
+
+  /// <summary>
+  /// Create a new WikiRepo instance on the repository folder given in
+  /// the system default <see cref="MachineWikiConfiguration"/>.
+  /// </summary>
+  public WikiRepo()
+    : this(MachineWikiConfiguration.LoadConfiguration())
+  {
   }
 
   /// <summary>
