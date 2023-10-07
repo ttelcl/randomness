@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WikiDataLib.Configuration;
+namespace WikiDataLib.Repository;
 
 /// <summary>
 /// Identifies one wiki dump set

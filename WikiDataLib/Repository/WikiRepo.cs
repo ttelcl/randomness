@@ -11,7 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace WikiDataLib.Configuration;
+namespace WikiDataLib.Repository;
 
 /// <summary>
 /// A repository directory comtaining wikipedia dump files (and maybe analysis results)
