@@ -116,4 +116,28 @@ public class WikiRepo
   {
     return Regex.IsMatch(wikiname, @"^[a-z]+$");
   }
+
+  /// <summary>
+  /// Returns true for strings that look like valid dump tags (dates in yyyyMMdd form)
+  /// </summary>
+  public static bool IsValidWikiDumpTag(string dumpTag)
+  {
+    return Regex.IsMatch(dumpTag, @"^2[0-9]{3}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])$");
+    //if(!Regex.IsMatch(dumpTag, @"^2[0-9]{7}$"))
+    //{
+    //  return false;
+    //}
+    //var year = Int32.Parse(dumpTag[..4]);
+    //if(year < 2000 || year >= 3000)
+    //{
+    //  return false;
+    //}
+    //var month = Int32.Parse(dumpTag[4..6]);
+    //if(month < 1 || month >= 12)
+    //{
+    //  return false;
+    //}
+    //var day = Int32.Parse(dumpTag[6..]);
+    //return day >= 1 && day <= 31; // Allow 'almost-dates' like "20180631"
+  }
 }
