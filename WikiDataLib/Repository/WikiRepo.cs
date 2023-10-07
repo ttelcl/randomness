@@ -34,6 +34,11 @@ public class WikiRepo
         $"Directory not found: {folder}");
     }
     Folder = Path.GetFullPath(folder);
+    ImportFolder = Path.Combine(Folder, "import-buffer");
+    if(!Directory.Exists(ImportFolder))
+    {
+      Directory.CreateDirectory(ImportFolder);
+    }
     SynchronizeWikis(false);
   }
 
@@ -59,6 +64,11 @@ public class WikiRepo
   /// The root folder for the repository
   /// </summary>
   public string Folder { get; init; }
+
+  /// <summary>
+  /// The folder to put files to be imported
+  /// </summary>
+  public string ImportFolder { get; init; }
 
   /// <summary>
   /// Synchronize the wiki instances tracked in this object to the
@@ -137,7 +147,7 @@ public class WikiRepo
   /// <param name="wikitag">
   /// The tag to add, consisting of lower case ascii characters only
   /// </param>
-  public void AddWiki(string wikitag)
+  public Wiki AddWiki(string wikitag)
   {
     if(!IsValidWikiName(wikitag))
     {
@@ -159,6 +169,29 @@ public class WikiRepo
       wiki = new Wiki(this, wikitag);
       _wikis[wiki.WikiTag] = wiki;
     }
+    return wiki;
+  }
+
+  /// <summary>
+  /// Return a WikiDump instance, creating missing folders if necessary
+  /// </summary>
+  public WikiDump GetDumpFolder(WikiDumpId wdi)
+  {
+    var wiki = FindWiki(wdi.WikiTag);
+    if(wiki == null)
+    {
+      wiki = AddWiki(wdi.WikiTag);
+    }
+    return wiki.GetDump(wdi.DumpTag);
+  }
+
+  /// <summary>
+  /// Enumerate the files (of supported types) pending import
+  /// </summary>
+  public IEnumerable<string> PendingFiles()
+  {
+    return SupportedSuffixes.SelectMany(
+      suffix => Directory.EnumerateFiles(ImportFolder, "*-" + suffix));
   }
 
   /// <summary>
@@ -175,5 +208,33 @@ public class WikiRepo
   public static bool IsValidWikiDumpTag(string dumpTag)
   {
     return Regex.IsMatch(dumpTag, @"^2[0-9]{3}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])$");
+  }
+
+  /// <summary>
+  /// Ends of filenames supported for import. These are the part of the filename
+  /// after the second '-' (after the wiki tag and dump tag)
+  /// </summary>
+  public static IReadOnlySet<string> SupportedSuffixes { get; } =
+    new HashSet<string>(StringComparer.InvariantCultureIgnoreCase) { 
+      "pages-articles-multistream.xml.bz2",
+      "pages-articles-multistream-index.txt.bz2"
+    };
+
+  /// <summary>
+  /// Return the WikiDumpId for the file if it is suitable for import
+  /// (null otherwise). This check goes deeper than <see cref="WikiDumpId.TryFromFile(string)"/>
+  /// </summary>
+  public static WikiDumpId? ImportId(string fileName)
+  {
+    if(File.Exists(fileName))
+    {
+      var shortName = Path.GetFileName(fileName);
+      var parts = shortName.Split('-', 3);
+      if(parts.Length == 3 && IsValidWikiName(parts[0]) && IsValidWikiDumpTag(parts[1]) && SupportedSuffixes.Contains(parts[2]))
+      {
+        return new WikiDumpId(parts[0], parts[1]);
+      }
+    }
+    return null;
   }
 }

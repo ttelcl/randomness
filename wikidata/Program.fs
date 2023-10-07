@@ -21,9 +21,13 @@ let rec run arglist =
   | "config" :: rest ->
     rest |> AppConfig.run
   | "wikis" :: "list" :: rest
+  | "wiki" :: "list" :: rest
+  | "wikilist" :: rest 
   | "wiki-list" :: rest 
   | "wikis-list" :: rest ->
     rest |> AppWikiList.run
+  | "import" :: rest ->
+    rest |> AppImport.run
   | x :: _ ->
     cp $"\frUnrecognized argument\f0: \fo{x}\f0."
     usage "all"

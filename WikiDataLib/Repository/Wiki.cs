@@ -60,6 +60,27 @@ public class Wiki
   public IReadOnlyCollection<WikiDump> Dumps { get => _dumps.Values; }
 
   /// <summary>
+  /// Return a known WikiDump instance, or null if not found
+  /// </summary>
+  public WikiDump? FindDump(string dumptag)
+  {
+    return _dumps.TryGetValue(dumptag, out var wikiDump) ? wikiDump : null; 
+  }
+
+  /// <summary>
+  /// Return a known WikiDump instance, creating it (and its folder) if not found
+  /// </summary>
+  public WikiDump GetDump(string dumptag)
+  {
+    if(!_dumps.TryGetValue(dumptag, out var wikiDump))
+    {
+      wikiDump = new WikiDump(this, dumptag);
+      _dumps[dumptag] = wikiDump;
+    }
+    return wikiDump;
+  }
+
+  /// <summary>
   /// Synchronize the tracked dump instances to the state on disk
   /// </summary>
   public void SynchronizeDumps(bool recurse)
