@@ -31,12 +31,11 @@ let run args =
     1
   | Some(o) ->
     let repo = new WikiRepo()
-    let wikitags = repo.WikiNames(false);
+    let wikis = repo.Wikis;
     cp $"wiki stores in repository \fc{repo.Folder}\f0:"
-    if wikitags.Count = 0 then
+    if wikis.Count = 0 then
       cp "\foNo wiki stores present yet\f0."
     else
-      for wikitag in wikitags do
-        let folder = Path.Combine(repo.Folder, wikitag)
-        cp $"  \fg{wikitag}\f0 ({folder})"
+      for wiki in wikis do
+        cp $"  \fg{wiki.WikiTag}\f0 ({wiki.Folder})"
     0

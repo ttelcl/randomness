@@ -20,21 +20,21 @@ namespace WikiDataLib.Repository;
 /// </summary>
 public class WikiRepo
 {
-  private readonly HashSet<string> _wikinames;
+  private readonly Dictionary<string, Wiki> _wikis;
 
   /// <summary>
   /// Create a new WikiRepo instance on the specified folder
   /// </summary>
   public WikiRepo(string folder)
   {
-    _wikinames = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+    _wikis = new Dictionary<string, Wiki>(StringComparer.InvariantCultureIgnoreCase);
     if(!Directory.Exists(folder))
     {
       throw new DirectoryNotFoundException(
         $"Directory not found: {folder}");
     }
     Folder = Path.GetFullPath(folder);
-    WikiNames(true);
+    SynchronizeWikis(false);
   }
 
   /// <summary>
@@ -61,50 +61,80 @@ public class WikiRepo
   public string Folder { get; init; }
 
   /// <summary>
-  /// Return a set of the names of the wikis tracked in this repo.
-  /// A tracked wiki is defined by the existence of an empty file
-  /// named {name}.iswiki in the repo folder and a {name} subfolder
-  /// (the subfolder is created by this method if missing).
-  /// This list is cached upon first call, unless <paramref name="reload"/>
-  /// is true, in which case the cache is reloaded. 
+  /// Synchronize the wiki instances tracked in this object to the
+  /// state of the folder on disk
   /// </summary>
-  /// <param name="reload">
-  /// If true: reload the cache
+  /// <param name="recurse">
+  /// Also synchronize the content of each pre-existing child wiki
+  /// (newly added child wikis are always synchronized even when this is false)
   /// </param>
-  /// <returns>
-  /// A set of the names of currently tracked wikis. This set is "hot" in the sense
-  /// that it adapts if wikis are added or removed.
-  /// </returns>
-  public IReadOnlySet<string> WikiNames(bool reload)
+  public void SynchronizeWikis(bool recurse)
   {
+    var oldnames = new HashSet<string>(_wikis.Keys, StringComparer.InvariantCultureIgnoreCase);
     var wikinames = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-    if(reload)
+    var tagfiles = Directory.GetFiles(Folder, "*.iswiki");
+    foreach(var tagfile in tagfiles)
     {
-      var tagfiles = Directory.GetFiles(Folder, "*.iswiki");
-      foreach(var tagfile in tagfiles)
+      var tag = Path.GetFileNameWithoutExtension(tagfile);
+      if(IsValidWikiName(tag))
       {
-        var tag = Path.GetFileNameWithoutExtension(tagfile);
-        if(IsValidWikiName(tag))
+        wikinames.Add(tag);
+        var wikifolder = Path.Combine(Folder, tag);
+        if(!Directory.Exists(wikifolder))
         {
-          wikinames.Add(tag);
-          var wikifolder = Path.Combine(Folder, tag);
-          if(!Directory.Exists(wikifolder))
-          {
-            Directory.CreateDirectory(wikifolder);
-          }
+          Directory.CreateDirectory(wikifolder);
         }
       }
-      var missing = _wikinames.Except(wikinames);
-      _wikinames.UnionWith(wikinames);
-      _wikinames.ExceptWith(missing);
     }
-    return _wikinames;
+    var missing = oldnames.Except(wikinames);
+    foreach(var missingName in missing)
+    {
+      _wikis.Remove(missingName);
+    }
+    foreach(var name in wikinames)
+    {
+      if(!_wikis.TryGetValue(name, out var wiki))
+      {
+        wiki = new Wiki(this, name);
+        _wikis[wiki.WikiTag] = wiki;
+      }
+      else if(recurse)
+      {
+        // TODO: re-sync the folder
+        throw new NotImplementedException(
+          "Recursive synchronization");
+      }
+    }
+  }
+
+  /// <summary>
+  /// Return a collection of the names of the wikis tracked in this repo.
+  /// </summary>
+  public IReadOnlyCollection<string> WikiNames { get => _wikis.Keys; }
+
+  /// <summary>
+  /// Return a collection of the wikis tracked in this repo.
+  /// </summary>
+  public IReadOnlyCollection<Wiki> Wikis { get => _wikis.Values; }
+
+  /// <summary>
+  /// Find a wiki instance in this repository (returning null if not found)
+  /// </summary>
+  /// <param name="wikitag">
+  /// The name of the wiki to find
+  /// </param>
+  /// <returns>
+  /// The <see cref="Wiki"/> instance if found, or null if not found
+  /// </returns>
+  public Wiki? FindWiki(string wikitag)
+  {
+    return _wikis.TryGetValue(wikitag, out var wiki) ? wiki : null;
   }
 
   /// <summary>
   /// Add a wiki folder for the specified wiki tag. If not already done
-  /// so, this will create the tag file, the folder and add the tag to the
-  /// list of tracked wikis (hot-updating the set returned by <see cref="WikiNames(bool)"/>)
+  /// so, this will create the tag file, the folder and add the wiki to the
+  /// list of tracked wikis
   /// </summary>
   /// <param name="wikitag">
   /// The tag to add, consisting of lower case ascii characters only
@@ -126,7 +156,11 @@ public class WikiRepo
     {
       File.WriteAllBytes(tagfile, Array.Empty<byte>());
     }
-    _wikinames.Add(wikitag);
+    if(!_wikis.TryGetValue(wikitag, out var wiki))
+    {
+      wiki = new Wiki(this, wikitag);
+      _wikis[wiki.WikiTag] = wiki;
+    }
   }
 
   /// <summary>
@@ -143,21 +177,5 @@ public class WikiRepo
   public static bool IsValidWikiDumpTag(string dumpTag)
   {
     return Regex.IsMatch(dumpTag, @"^2[0-9]{3}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])$");
-    //if(!Regex.IsMatch(dumpTag, @"^2[0-9]{7}$"))
-    //{
-    //  return false;
-    //}
-    //var year = Int32.Parse(dumpTag[..4]);
-    //if(year < 2000 || year >= 3000)
-    //{
-    //  return false;
-    //}
-    //var month = Int32.Parse(dumpTag[4..6]);
-    //if(month < 1 || month >= 12)
-    //{
-    //  return false;
-    //}
-    //var day = Int32.Parse(dumpTag[6..]);
-    //return day >= 1 && day <= 31; // Allow 'almost-dates' like "20180631"
   }
 }
