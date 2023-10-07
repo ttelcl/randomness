@@ -100,9 +100,7 @@ public class WikiRepo
       }
       else if(recurse)
       {
-        // TODO: re-sync the folder
-        throw new NotImplementedException(
-          "Recursive synchronization");
+        wiki.SynchronizeDumps(recurse);
       }
     }
   }

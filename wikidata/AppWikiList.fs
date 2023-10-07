@@ -37,5 +37,20 @@ let run args =
       cp "\foNo wiki stores present yet\f0."
     else
       for wiki in wikis do
-        cp $"  \fg{wiki.WikiTag}\f0 ({wiki.Folder})"
+        let dumpCountColor = if wiki.Dumps.Count > 0 then "\fb" else "\fr"
+        cp $"  \fg{wiki.WikiTag}\f0 ({wiki.Folder})  {dumpCountColor}{wiki.Dumps.Count}\f0 dumps."
+        for dump in wiki.Dumps do
+          let keyColor = if dump.HasMainFile && dump.HasMainIndexBz2 then "\fy" else "\fo"
+          let mainColor = if dump.HasMainFile then "\fg" else "\fr"
+          let mainIdxRawColor = if dump.HasMainIndexBz2 then "\fg" else "\fr"
+          let mainIdxColor = if dump.HasMainIndex then "\fg" else "\fr"
+          let streamIdxColor =
+            if dump.HasStreamIndex then
+              "\fg"
+            elif dump.HasIntermediateStreamIndex then
+              "\fo"
+            else
+              "\fr"
+          cp $"      {keyColor}{dump.Id}   {mainColor}master  {mainIdxRawColor}rawindex  {mainIdxColor}index  {streamIdxColor}stream\f0"
+        
     0
