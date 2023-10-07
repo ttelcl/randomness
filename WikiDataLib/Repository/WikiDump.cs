@@ -33,8 +33,7 @@ public class WikiDump
     MainDumpFileName = Path.Combine(Folder, $"{Id}-pages-articles-multistream.xml.bz2");
     MainRawIndexFileName = Path.Combine(Folder, $"{Id}-pages-articles-multistream-index.txt.bz2");
     MainIndexFileName = Path.Combine(Folder, $"{Id}-pages-articles-multistream-index.txt");
-    StreamIndexFileName = Path.Combine(Folder, $"{Id}-stream-index.csv");
-    StreamIndexIntermediateFileName = Path.Combine(Folder, $"{Id}-stream-index.tmp.csv");
+    StreamIndexFileName = Path.Combine(Folder, $"{Id}.stream-index.csv");
     Synchronize();
   }
 
@@ -103,20 +102,25 @@ public class WikiDump
   public bool HasStreamIndex { get => File.Exists(StreamIndexFileName); }
 
   /// <summary>
-  /// The name of the intermediate stream index file (incomplete version of <see cref="StreamIndexFileName"/>)
-  /// </summary>
-  public string StreamIndexIntermediateFileName { get; init; }
-
-  /// <summary>
-  /// True if the intermediate stream index file is present
-  /// </summary>
-  public bool HasIntermediateStreamIndex { get => File.Exists(StreamIndexIntermediateFileName); } 
-
-  /// <summary>
   /// Synchronize the state of this instance with the disk state.
   /// Currently this is a no-op
   /// </summary>
   public void Synchronize()
   {
   }
+
+  /// <summary>
+  /// Open the main dump file (a BZ2 stream)
+  /// </summary>
+  /// <returns></returns>
+  public FileStream OpenMainDump()
+  {
+    if(!HasMainFile)
+    {
+      throw new FileNotFoundException(
+        "The data file is missing", MainDumpFileName);
+    }
+    return File.OpenRead(MainDumpFileName);
+  }
+
 }

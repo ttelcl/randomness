@@ -19,6 +19,7 @@
     <Compile Include="AppConfig.fs" />
     <Compile Include="AppWikiList.fs" />
     <Compile Include="AppImport.fs" />
+    <Compile Include="AppIndex.fs" />
     <Compile Include="Program.fs" />
     <None Include="README.md" />
   </ItemGroup>

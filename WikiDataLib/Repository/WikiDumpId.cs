@@ -38,6 +38,19 @@ public class WikiDumpId
   }
 
   /// <summary>
+  /// Parse the text as a wikitag-dumptag pair
+  /// </summary>
+  public static WikiDumpId Parse(string text)
+  {
+    var parts = text.Split('-');
+    if(parts.Length == 2)
+    { 
+      return new WikiDumpId(parts[0], parts[1]);
+    }
+    throw new ArgumentOutOfRangeException(nameof(text), "Unrecognized wiki dump id format");
+  }
+
+  /// <summary>
   /// Try to derive a WikiDumpId from a file name. Only the file part
   /// of the path is considered.
   /// </summary>

@@ -27,7 +27,7 @@ let run args =
   let oo = args |> parseMore ()
   match oo with
   | None ->
-    Usage.usage "wikis list"
+    Usage.usage "wiki-list"
     1
   | Some(o) ->
     let repo = new WikiRepo()
@@ -47,8 +47,6 @@ let run args =
           let streamIdxColor =
             if dump.HasStreamIndex then
               "\fg"
-            elif dump.HasIntermediateStreamIndex then
-              "\fo"
             else
               "\fr"
           cp $"      {keyColor}{dump.Id}   {mainColor}master  {mainIdxRawColor}rawindex  {mainIdxColor}index  {streamIdxColor}stream\f0"
