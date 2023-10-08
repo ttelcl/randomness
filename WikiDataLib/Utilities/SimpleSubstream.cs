@@ -52,6 +52,27 @@ public class SimpleSubstream: Stream
   }
 
   /// <summary>
+  /// Return a new SimpleSubstream containing the next <paramref name="length"/>
+  /// bytes of the host stream. This overload does not require the host stream
+  /// to be seekable.
+  /// </summary>
+  public static SimpleSubstream FromHostSlice(Stream hostStream, long length)
+  {
+    return new SimpleSubstream(hostStream, length);
+  }
+
+  /// <summary>
+  /// Reposition the host stream to <paramref name="offset"/> and return a new
+  /// SimpleSubstream containing the next <paramref name="length"/> bytes of the
+  /// host stream. This overload requires the host stream to be seekable.
+  /// </summary>
+  public static SimpleSubstream FromHostSlice(Stream hostStream, long length, long offset)
+  {
+    hostStream.Position = offset;
+    return new SimpleSubstream(hostStream, length);
+  }
+
+  /// <summary>
   /// The host stream
   /// </summary>
   public Stream HostStream { get; init; }
