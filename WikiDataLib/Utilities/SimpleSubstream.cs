@@ -16,25 +16,23 @@ namespace WikiDataLib.Utilities;
 /// <summary>
 /// Exposes a part of another stream
 /// </summary>
-public class ReadOnlySubstream: Stream
+public class SimpleSubstream: Stream
 {
+
   /// <summary>
-  /// Create a new ReadOnlySubStream, exposing the slice of the
-  /// specified <paramref name="length"/> starting at the specified <paramref name="offset"/>
+  /// Create a new ReadOnlySubStream, exposing a slice of <paramref name="length"/>
+  /// bytes starting at the host stream's current offset
   /// </summary>
   /// <param name="hostStream">
-  /// The host stream from which a part is exposed by this ReadOnlySubstream.
-  /// Closing the this ReadOnlySubstream does not close the host stream.
+  /// The host stream from which a part is exposed by this ReadOnlySubstream
+  /// Closing this ReadOnlySubstream does not close the host stream.
   /// </param>
   /// <param name="length">
-  /// The length of the stream to expose (positioned before the offset in the parameter list
-  /// to stay in line with the other constructor)
+  /// The length of the stream to expose.
   /// </param>
-  /// <param name="offset">
-  /// The offset at which the sub streaam starts.
-  /// </param>
-  public ReadOnlySubstream(Stream hostStream, long length, long offset)
+  public SimpleSubstream(Stream hostStream, long length)
   {
+    var offset = hostStream.Position;
     HostStream = hostStream;
     if(!hostStream.CanRead)
     {
@@ -55,22 +53,6 @@ public class ReadOnlySubstream: Stream
       throw new ArgumentException("The end of the substream cannot be beyond the end of the host stream");
     }
     ClampHost();
-  }
-
-  /// <summary>
-  /// Create a new ReadOnlySubStream, exposing the slice of the
-  /// specified <paramref name="length"/> starting at the host stream's current offset
-  /// </summary>
-  /// <param name="hostStream">
-  /// The host stream from which a part is exposed by this ReadOnlySubstream
-  /// Closing the this ReadOnlySubstream does not close the host stream.
-  /// </param>
-  /// <param name="length">
-  /// The length of the stream to expose.
-  /// </param>
-  public ReadOnlySubstream(Stream hostStream, long length)
-    : this(hostStream, length, hostStream.Position)
-  {
   }
 
   /// <summary>
