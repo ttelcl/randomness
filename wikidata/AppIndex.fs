@@ -96,6 +96,7 @@ let run args =
         None
       else
         Some(o)
+    | "-wiki" :: dumpid :: rest
     | "-dump" :: dumpid :: rest ->
       let wdi = dumpid |> WikiDumpId.Parse
       rest |> parseMore {o with Source = Some(DumpSource.DumpFolder(wdi))}

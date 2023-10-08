@@ -18,10 +18,14 @@ let rec run arglist =
   | [] ->
     usage "all"
     0  // program return status code to the operating system; 0 == "OK"
+  | "-?" :: _ ->
+    usage "short"
+    0  // program return status code to the operating system; 0 == "OK"
   | "config" :: rest ->
     rest |> AppConfig.run
   | "wikis" :: "list" :: rest
   | "wiki" :: "list" :: rest
+  | "list" :: rest
   | "wikilist" :: rest 
   | "wiki-list" :: rest 
   | "wikis-list" :: rest ->
@@ -30,6 +34,8 @@ let rec run arglist =
     rest |> AppImport.run
   | "index" :: rest ->
     rest |> AppIndex.run
+  | "extract" :: rest ->
+    rest |> AppExtract.run
   | x :: _ ->
     cp $"\frUnrecognized argument\f0: \fo{x}\f0."
     usage "all"

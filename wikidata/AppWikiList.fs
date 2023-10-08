@@ -27,7 +27,7 @@ let run args =
   let oo = args |> parseMore ()
   match oo with
   | None ->
-    Usage.usage "wiki-list"
+    Usage.usage "list"
     1
   | Some(o) ->
     let repo = new WikiRepo()
