@@ -123,4 +123,22 @@ public class WikiDump
     return File.OpenRead(MainDumpFileName);
   }
 
+  /// <summary>
+  /// Load the stream index (throws an exception if the file is missing)
+  /// </summary>
+  public SubstreamIndex LoadIndex()
+  {
+    if(!HasMainFile)
+    {
+      throw new FileNotFoundException(
+        "The data file is missing", MainDumpFileName);
+    }
+    if(!HasStreamIndex)
+    {
+      throw new FileNotFoundException(
+        "The stream index file is missing", StreamIndexFileName);
+    }
+    return new SubstreamIndex(StreamIndexFileName, MainDumpFileName);
+  }
+
 }
