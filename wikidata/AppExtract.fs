@@ -60,15 +60,22 @@ let private runExtract o =
     |> Seq.append wrapOffsets
     |> Set.ofSeq // remove duplicates
     |> Seq.sort // make sure it is sorted
-    |> Seq.toList
+    |> Seq.toArray
+  let wrapped =
+    offsets.Length >= 2 && 
+    offsets[0] = subindex.FirstOffset &&
+    offsets[offsets.Length-1] = subindex.LastOffset
   let offsetText o =
-    if o = subindex.FirstOffset then
-      "A"
-    elif o = subindex.LastOffset then
-      "Z"
+    if wrapped && o = subindex.FirstOffset then
+      "("
+    elif wrapped && o = subindex.LastOffset then
+      ")"
     else
       $"p{o}"
-  let offsetsTag = String.Join("-", offsets |> List.map offsetText)
+  let offsetsTag = 
+    String.Join("-", offsets |> Array.map offsetText)
+      .Replace("(-", "(")
+      .Replace("-)", ")")
   let outNameShort =
     if o.Raw then
       $"{wikiId}.{offsetsTag}.wiki.xml.bz2"
@@ -107,6 +114,8 @@ let run args =
       rest |> parseMore {o with Raw = true}
     | "-wrap" :: rest ->
       rest |> parseMore {o with Wrap = true}
+    | "-nowrap" :: rest ->
+      rest |> parseMore {o with Wrap = false}
     | "-info" :: rest ->
       rest |> parseMore {o with InfoMode = true}
     | "-p" :: position :: rest ->
@@ -130,7 +139,7 @@ let run args =
   let oo = args |> parseMore {
     InfoMode = false
     Raw = false
-    Wrap = false
+    Wrap = true
     WikiId = None
     Sections = []
   }
