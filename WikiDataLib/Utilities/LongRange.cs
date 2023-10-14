@@ -14,7 +14,7 @@ namespace WikiDataLib.Utilities;
 /// <summary>
 /// A range defined by an offset and a length as Int64 values
 /// </summary>
-public struct LongRange
+public readonly struct LongRange
 {
   /// <summary>
   /// Create a new LongRange
