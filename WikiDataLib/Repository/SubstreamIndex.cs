@@ -231,6 +231,24 @@ public class SubstreamIndex
   }
 
   /// <summary>
+  /// Open a substream containing the slice identified by the stream index
+  /// (returning null if out of range)
+  /// </summary>
+  public SimpleSubstream? OpenIndex(Stream host, int index)
+  {
+    if(index < 0 || index >= _offsets.Count)
+    {
+      return null;
+    }
+    else
+    {
+      var offset = _offsets[index];
+      var length = _lengths[index];
+      return SimpleSubstream.FromHostSlice(host, length, offset);
+    }
+  }
+
+  /// <summary>
   /// Reload the index from the file named by <see cref="IndexFileName"/>.
   /// </summary>
   public void Reload()

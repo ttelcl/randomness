@@ -34,7 +34,7 @@ let private runExtract o =
   if dump.HasStreamIndex |> not then
     failwith $"'{wikiId}' has no stream index yet (run 'wikidata index -wiki {wikiId}' to create it)"
   let subindex = dump.LoadIndex()
-  let sectionIndexToOffset si =
+  let sectionIndexToIndex si =
     match si with
     | ByOffset(offset) ->
       if offset < 0L || offset > subindex.LastOffset then
@@ -46,41 +46,42 @@ let private runExtract o =
       let start = subindex.Offsets[idx]
       if start <> offset then
         failwith $"Offset {offset} is not valid. The next lower valid value is {start}"
-      start
+      idx
     | ByIndex(idx0) ->
       let idx = if idx0 < 0 then idx0 + subindex.Count else idx0
       if idx < 0 || idx >= subindex.Count then
         failwith $"'{idx0}' is not a valid index. Expecting a value between -{subindex.Count} and {subindex.Count-1}"
-      subindex.Offsets[idx]
-  let wrapOffsets =
-    if o.Wrap then [| subindex.FirstOffset; subindex.LastOffset |] else [| |]
-  let offsets =
+      idx
+  let lastIndex = subindex.Count-1
+  let wrapIndices =
+    if o.Wrap then [| 0; lastIndex |] else [| |]
+  let indices =
     o.Sections
-    |> Seq.map sectionIndexToOffset
-    |> Seq.append wrapOffsets
+    |> Seq.map sectionIndexToIndex
+    |> Seq.append wrapIndices
     |> Set.ofSeq // remove duplicates
     |> Seq.sort // make sure it is sorted
     |> Seq.toArray
   let wrapped =
-    offsets.Length >= 2 && 
-    offsets[0] = subindex.FirstOffset &&
-    offsets[offsets.Length-1] = subindex.LastOffset
-  let offsetText o =
-    if wrapped && o = subindex.FirstOffset then
+    indices.Length >= 2 && 
+    indices[0] = 0 &&
+    indices[indices.Length-1] = lastIndex
+  let indexText o =
+    if wrapped && o = 0 then
       "("
-    elif wrapped && o = subindex.LastOffset then
+    elif wrapped && o = lastIndex then
       ")"
     else
       $"p{o}"
-  let offsetsTag = 
-    String.Join("-", offsets |> Array.map offsetText)
+  let indicesTag = 
+    String.Join("-", indices |> Array.map indexText)
       .Replace("(-", "(")
       .Replace("-)", ")")
   let outNameShort =
     if o.Raw then
-      $"{wikiId}.{offsetsTag}.wiki.xml.bz2"
+      $"{wikiId}.{indicesTag}.wiki.xml.bz2"
     else
-      $"{wikiId}.{offsetsTag}.wiki.xml"
+      $"{wikiId}.{indicesTag}.wiki.xml"
   let onm = outNameShort
   cp $"Output name: {onm}"
   use host = dump.OpenMainDump()
@@ -88,10 +89,10 @@ let private runExtract o =
   | true ->
     do
       use f = onm |> startFileBinary
-      for offset in offsets do
-        use segment = subindex.Open(host, offset, true, true)
+      for index in indices do
+        use segment = subindex.OpenIndex(host, index)
         if segment = null then
-          failwith $"Could not get range for ofset {offset} (internal error)"
+          failwith $"Could not get range for index {index} (internal error)"
         segment.CopyTo(f)
     onm |> finishFile
     ()
@@ -118,7 +119,7 @@ let run args =
       rest |> parseMore {o with Wrap = false}
     | "-info" :: rest ->
       rest |> parseMore {o with InfoMode = true}
-    | "-p" :: position :: rest ->
+    | "-s" :: position :: rest ->
       let idx = position |> Int64.Parse |> SectionIndex.ByOffset
       rest |> parseMore {o with Sections = idx :: o.Sections}
     | "-i" :: index :: rest ->
