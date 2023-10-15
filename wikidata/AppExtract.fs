@@ -89,11 +89,8 @@ let private runExtract o =
   | true ->
     do
       use f = onm |> startFileBinary
-      for index in indices do
-        use segment = subindex.OpenIndex(host, index)
-        if segment = null then
-          failwith $"Could not get range for index {index} (internal error)"
-        segment.CopyTo(f)
+      use segmentStream = subindex.OpenConcatenation(host, indices)
+      segmentStream.CopyTo(f)
     onm |> finishFile
     ()
   | false ->
