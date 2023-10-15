@@ -237,6 +237,18 @@ public class ConcatenatedStream: Stream
     return base.ReadByte();
   }
 
+  /// <inheritdoc/>
+  protected override void Dispose(bool disposing)
+  {
+    _currentStream = null;
+    if(!_disposed && disposing)
+    {
+      _streamEnumerator?.Dispose();
+    }
+    _disposed = true;
+    base.Dispose(disposing);
+  }
+
   /// <summary>
   /// Open the next stream, if there is any left.
   /// </summary>

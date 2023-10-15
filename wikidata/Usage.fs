@@ -34,14 +34,14 @@ let usage detail =
     cp "   \fg-file\f0 <\fcfilename\f0>      (For debug purposes)"
     cp ""
   if showSynopsis "extract" then
-    cp "\fowikidata extract\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-raw\f0] [\fg-nowrap\f0] {\fg-p\f0 <\fcposition\f0>|\fg-i\f0 <\fcindex\f0>}"
+    cp "\fowikidata extract\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-raw\f0] [\fg-nowrap\f0] {\fg-s\f0 <\fcstart\f0>|\fg-i\f0 <\fcindex\f0>}"
   if showDescription "extract" then
     cp "   Extract an entry from a wikidump to the current directory"
     cp "   \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>   The wiki dump to extract from"
     cp "   \fg-raw\f0\fx\fx                      Extract the raw compressed segment (do not decompress)"
     cp "   \fg-nowrap\f0\fx\fx                   Do not prepend the header and append the trailer (saving a sequence"
     cp "   \fx\fx\fx\fx                          of XML fragments instead of a document)"
-    cp "   \fg-p\f0 <\fcposition\f0>             Extract the substream at the specified position (see *.stream-index.csv)"
+    cp "   \fg-s\f0 <\fcstart\f0>                Extract the substream at the specified position (see *.stream-index.csv)"
     cp "   \fg-i\f0 <\fcindex\f0>                Extract the i-th substream. Pass a negative value to count from the end."
     cp "   \fx\fx\fx\fx                          \fc0\f0 is the header and \fc-1\f0 the trailer"
     cp "   \fg-info\f0\fx\fx                     Do not extract anything but print info"

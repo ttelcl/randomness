@@ -231,6 +231,32 @@ public class SubstreamIndex
   }
 
   /// <summary>
+  /// Open a substream containing the slice identified by the stream index
+  /// (returning null if out of range)
+  /// </summary>
+  public SimpleSubstream? OpenIndex(Stream host, int index)
+  {
+    if(index < 0 || index >= _offsets.Count)
+    {
+      return null;
+    }
+    else
+    {
+      var offset = _offsets[index];
+      var length = _lengths[index];
+      return SimpleSubstream.FromHostSlice(host, length, offset);
+    }
+  }
+
+  /// <summary>
+  /// Open a stream that concatenates the indicated slices from the host stream
+  /// </summary>
+  public ConcatenatedStream OpenConcatenation(Stream host, IEnumerable<int> indices)
+  {
+    return ConcatenatedStream.FromSlices(host, indices.Select(index => new LongRange(_offsets[index], _lengths[index])));
+  }
+
+  /// <summary>
   /// Reload the index from the file named by <see cref="IndexFileName"/>.
   /// </summary>
   public void Reload()
