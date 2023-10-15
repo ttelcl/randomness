@@ -249,6 +249,14 @@ public class SubstreamIndex
   }
 
   /// <summary>
+  /// Open a stream that concatenates the indicated slices from the host stream
+  /// </summary>
+  public ConcatenatedStream OpenConcatenation(Stream host, IEnumerable<int> indices)
+  {
+    return ConcatenatedStream.FromSlices(host, indices.Select(index => new LongRange(_offsets[index], _lengths[index])));
+  }
+
+  /// <summary>
   /// Reload the index from the file named by <see cref="IndexFileName"/>.
   /// </summary>
   public void Reload()
