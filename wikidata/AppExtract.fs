@@ -4,6 +4,7 @@ open System
 open System.IO
 
 open Newtonsoft.Json
+open ICSharpCode.SharpZipLib.BZip2
 
 open WikiDataLib.Configuration
 open WikiDataLib.Repository
@@ -85,16 +86,11 @@ let private runExtract o =
   let onm = outNameShort
   cp $"Output name: {onm}"
   use host = dump.OpenMainDump()
-  match o.Raw with
-  | true ->
-    do
-      use f = onm |> startFileBinary
-      use segmentStream = subindex.OpenConcatenation(host, indices)
-      segmentStream.CopyTo(f)
-    onm |> finishFile
-    ()
-  | false ->
-    cp "\frNot Yet Implemented\f0. \fg-raw\f0 is currently REQUIRED"
+  do
+    use f = onm |> startFileBinary
+    use segmentStream = subindex.OpenConcatenation(host, indices, o.Raw |> not)
+    segmentStream.CopyTo(f)
+  onm |> finishFile
   0
 
 let run args =
