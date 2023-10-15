@@ -27,9 +27,9 @@ let usage detail =
   if showDescription "import" then
     cp "   Import the named data file(s), moving them to the right folder in the repository"
     cp ""
-  if showSynopsis "index" then
-    cp "\fowikidata index\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-n\f0 <\fccount\f0>] [\fg-offset\f0 <\fcoffset\f0>]"
-  if showDescription "index" then
+  if showSynopsis "streamindex" then
+    cp "\fowikidata streamindex\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-n\f0 <\fccount\f0>] [\fg-offset\f0 <\fcoffset\f0>]"
+  if showDescription "streamindex" then
     cp "   Initialize or update the stream index for a dump, if missing."
     cp "   \fg-file\f0 <\fcfilename\f0>      (For debug purposes)"
     cp ""

@@ -1,4 +1,4 @@
-﻿module AppIndex
+﻿module AppStreamIndex
 
 open System
 open System.IO
@@ -118,6 +118,6 @@ let run args =
   | Some(o) ->
     o |> runIndex
   | None ->
-    Usage.usage "index"
+    Usage.usage "streamindex"
     1
   

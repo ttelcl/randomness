@@ -32,8 +32,8 @@ let rec run arglist =
     rest |> AppWikiList.run
   | "import" :: rest ->
     rest |> AppImport.run
-  | "index" :: rest ->
-    rest |> AppIndex.run
+  | "streamindex" :: rest ->
+    rest |> AppStreamIndex.run
   | "extract" :: rest ->
     rest |> AppExtract.run
   | x :: _ ->
