@@ -10,6 +10,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using ICSharpCode.SharpZipLib.BZip2;
+
 using WikiDataLib.Utilities;
 
 namespace WikiDataLib.Repository;
@@ -251,9 +253,32 @@ public class SubstreamIndex
   /// <summary>
   /// Open a stream that concatenates the indicated slices from the host stream
   /// </summary>
-  public ConcatenatedStream OpenConcatenation(Stream host, IEnumerable<int> indices)
+  public ConcatenatedStream OpenConcatenation(Stream host, IEnumerable<int> indices, bool decompress)
   {
-    return ConcatenatedStream.FromSlices(host, indices.Select(index => new LongRange(_offsets[index], _lengths[index])));
+    return new ConcatenatedStream(EnumerateSegments(host, indices, decompress));
+  }
+
+  private IEnumerable<Stream> EnumerateSegments(Stream host, IEnumerable<int> indices, bool decompress)
+  {
+    foreach(var i in indices)
+    {
+      using(var stream = SimpleSubstream.FromHostSlice(host, _lengths[i], _offsets[i]))
+      {
+        if(decompress)
+        {
+          // BZip2InputStream does not handle multi-stream BZip2 files as desired. Each segment
+          // needs to be decompressed separately.
+          using(var decompressed = new BZip2InputStream(stream) { IsStreamOwner = false })
+          {
+            yield return decompressed;
+          }
+        }
+        else
+        {
+          yield return stream;
+        }
+      }
+    }
   }
 
   /// <summary>
