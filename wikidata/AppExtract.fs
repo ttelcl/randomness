@@ -18,7 +18,6 @@ type private SectionIndex =
   | ByIndex of int
 
 type private ExtractOptions = {
-  InfoMode: bool
   Raw: bool
   Wrap: bool
   WikiId: WikiDumpId option
@@ -110,8 +109,6 @@ let run args =
       rest |> parseMore {o with Wrap = true}
     | "-nowrap" :: rest ->
       rest |> parseMore {o with Wrap = false}
-    | "-info" :: rest ->
-      rest |> parseMore {o with InfoMode = true}
     | "-s" :: position :: rest ->
       let idx = position |> Int64.Parse |> SectionIndex.ByOffset
       rest |> parseMore {o with Sections = idx :: o.Sections}
@@ -131,7 +128,6 @@ let run args =
       cp $"\frUnrecognized argument\f0: \fo{x}\f0"
       None
   let oo = args |> parseMore {
-    InfoMode = false
     Raw = false
     Wrap = true
     WikiId = None

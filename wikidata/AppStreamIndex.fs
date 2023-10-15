@@ -19,7 +19,6 @@ type private DumpSource =
 type private IndexOptions = {
   Source: DumpSource option
   StreamCount: int
-  Offset: int64
 }
 
 type private StreamStart = {
@@ -104,15 +103,12 @@ let run args =
       rest |> parseMore {o with Source = Some(DumpSource.DumpFile(file))}
     | "-n" :: count :: rest ->
       rest |> parseMore {o with StreamCount = count |> Int32.Parse}
-    | "-offset" :: offset :: rest ->
-      rest |> parseMore {o with Offset = offset |> Int64.Parse}
     | x :: _ ->
       cp $"\frUnrecognized argument:\f0 '\fo{x}\f0'"
       None
   let oo = args |> parseMore {
     Source = None
     StreamCount = Int32.MaxValue
-    Offset = 0L
   }
   match oo with
   | Some(o) ->
