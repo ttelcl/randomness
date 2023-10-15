@@ -271,6 +271,7 @@ public class ConcatenatedStream: Stream
       else
       {
         // EOF
+        _currentStream = null;
         return false;
       }
     }
