@@ -34,6 +34,14 @@ let usage detail =
     //cp "   \fg-file\f0 <\fcfilename\f0>      (For debug purposes)"
     //cp "   \fg-n\f0 <\fccount\f0>            Abort after count streams (for debug purposes)"
     cp ""
+  if showSynopsis "articleindex" then
+    cp "\fowikidata articleindex\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-n\f0 <streamcount\f0>] [\fg-split\f0]"
+  if showDescription "articleindex" then
+    cp "   Initialize or extend the article index, processing the next \fcn\f0 streams. 'articles' are pages that are not redirects"
+    cp "   \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>   The wiki dump to extract from"
+    cp "   \fg-split\f0\fx\fx\fx\fx              Create per-stream index files"
+    cp "   \fg-n\f0 <streamcount\f0>             The number of streams to process"
+    cp ""
   if showSynopsis "extract" then
     cp "\fowikidata extract\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-raw\f0] [\fg-nowrap\f0] {\fg-s\f0 <\fcstart\f0>|\fg-i\f0 <\fcindex\f0>}"
   if showDescription "extract" then

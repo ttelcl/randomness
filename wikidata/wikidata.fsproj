@@ -21,6 +21,7 @@
     <Compile Include="AppImport.fs" />
     <Compile Include="AppStreamIndex.fs" />
     <Compile Include="AppExtract.fs" />
+    <Compile Include="AppArticleIndex.fs" />
     <Compile Include="Program.fs" />
     <None Include="README.md" />
   </ItemGroup>
