@@ -9,6 +9,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using XsvLib;
+
 namespace WikiDataLib.Repository;
 
 /// <summary>
@@ -25,7 +27,7 @@ public class ArticleIndexRow
     string title,
     int byteCount,
     long revisionId,
-    string timestamp)
+    DateTime timestamp)
   {
     PageId = pageId;
     RevisionId = revisionId;
@@ -53,7 +55,7 @@ public class ArticleIndexRow
   /// <summary>
   /// The ISO format UTC time stamp
   /// </summary>
-  public string TimeStamp { get; init; }
+  public DateTime TimeStamp { get; init; }
 
   /// <summary>
   /// The current revision ID
@@ -65,8 +67,33 @@ public class ArticleIndexRow
   /// </summary>
   public int ByteCount { get; init; }
 
-  public static ArticleIndexRow ParseCsv(string line)
+  /// <summary>
+  /// Read the article index rows
+  /// </summary>
+  public static IEnumerable<ArticleIndexRow> ReadXsv(ITextRecordReader itrr)
   {
-    throw new NotImplementedException();
+    var reader = new XsvReader(itrr, true);
+    var buffer = new ArticleIndexRowBuffer(reader.Header);
+    foreach(var textrow in reader.ReadRecords())
+    {
+      buffer.Attach(textrow);
+      yield return buffer.GetRow();
+      buffer.Detach();
+    }
+  }
+
+  /// <summary>
+  /// Write the article index rows
+  /// </summary>
+  public static void WriteXsv(ITextRecordWriter itrw, IEnumerable<ArticleIndexRow> rows)
+  {
+    var buffer = new ArticleIndexRowBuffer();
+    buffer.WriteHeader(itrw);
+    buffer.Attach(new string[buffer.Count]);
+    foreach(var row in rows)
+    {
+      buffer.PutRow(row);
+      buffer.WriteRow(itrw);
+    }
   }
 }
