@@ -72,7 +72,7 @@ let private runExtract o =
     elif wrapped && o = lastIndex then
       ")"
     else
-      $"p{o}"
+      $"i{o}"
   let indicesTag = 
     String.Join("-", indices |> Array.map indexText)
       .Replace("(-", "(")
