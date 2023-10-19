@@ -1,4 +1,4 @@
-﻿module AppExtract
+﻿module AppDbg
 
 open System
 open System.IO
@@ -13,18 +13,22 @@ open WikiDataLib.Utilities
 open ColorPrint
 open CommonTools
 
+// wikidata dbg -wiki enwiki-20230920 -i 1
+
+
 type private SectionIndex =
   | ByOffset of int64
   | ByIndex of int
 
-type private ExtractOptions = {
-  Raw: bool
-  Wrap: bool
-  WikiId: WikiDumpId option
+type private DbgOptions = {
   Sections: SectionIndex list
+  WikiId: WikiDumpId option  
 }
 
-let private runExtract o =
+let private runDbgSection idx o =
+  0
+
+let private runDbg o =
   let repo = new WikiRepo()
   let wikiId =
     match o.WikiId with
@@ -39,7 +43,7 @@ let private runExtract o =
     | ByOffset(offset) ->
       if offset < 0L || offset > subindex.LastOffset then
         failwith $"offset out of range: {offset}. Expected range is 0 - {subindex.LastOffset}"
-      let idx = subindex.FindRangeIndex(offset, false, true)
+      let idx = subindex.FindRangeIndex(offset, false, false)
       if idx < 0 then
         // unexpected when exact = false
         failwith "Invalid offset (internal error)"
@@ -49,47 +53,16 @@ let private runExtract o =
       idx
     | ByIndex(idx0) ->
       let idx = if idx0 < 0 then idx0 + subindex.Count else idx0
-      if idx < 0 || idx >= subindex.Count then
-        failwith $"'{idx0}' is not a valid index. Expecting a value between -{subindex.Count} and {subindex.Count-1}"
+      if idx <= 0 || idx >= subindex.Count-1 then
+        failwith $"'{idx0}' is not a valid index. Expecting a value between -{subindex.Count-1} and {subindex.Count-2} (excluding 0 and -1)"
       idx
-  let lastIndex = subindex.Count-1
-  let wrapIndices =
-    if o.Wrap then [| 0; lastIndex |] else [| |]
-  let indices =
-    o.Sections
-    |> Seq.map sectionIndexToIndex
-    |> Seq.append wrapIndices
-    |> Set.ofSeq // remove duplicates
-    |> Seq.sort // make sure it is sorted
-    |> Seq.toArray
-  let wrapped =
-    indices.Length >= 2 && 
-    indices[0] = 0 &&
-    indices[indices.Length-1] = lastIndex
-  let indexText o =
-    if wrapped && o = 0 then
-      "("
-    elif wrapped && o = lastIndex then
-      ")"
-    else
-      $"i{o}"
-  let indicesTag = 
-    String.Join("-", indices |> Array.map indexText)
-      .Replace("(-", "(")
-      .Replace("-)", ")")
-  let outNameShort =
-    if o.Raw then
-      $"{wikiId}.{indicesTag}.wiki.xml.bz2"
-    else
-      $"{wikiId}.{indicesTag}.wiki.xml"
-  let onm = outNameShort
-  cp $"Output name: {onm}"
-  use host = dump.OpenMainDump()
-  do
-    use f = onm |> startFileBinary
-    use segmentStream = subindex.OpenConcatenation(host, indices, o.Raw |> not)
-    segmentStream.CopyTo(f)
-  onm |> finishFile
+  for si in o.Sections do
+    let idx = si |> sectionIndexToIndex
+    let offset = subindex.Offsets[idx]
+    let length = subindex.Lengths[idx]
+    cpx $"Processing section \fb{idx}\f0 of \fg{wikiId}\f0 from \fc{offset}\f0 (\fC0x%08X{offset}\f0)"
+    cp $" to \fc{offset+length-1L}\f0 (\fC0x%08X{offset+length-1L}\f0)."
+    ()
   0
 
 let run args =
@@ -103,12 +76,6 @@ let run args =
     | "-wiki" :: key :: rest ->
       let wdi = key |> WikiDumpId.Parse
       rest |> parseMore {o with WikiId = Some(wdi)}
-    | "-raw" :: rest ->
-      rest |> parseMore {o with Raw = true}
-    | "-wrap" :: rest ->
-      rest |> parseMore {o with Wrap = true}
-    | "-nowrap" :: rest ->
-      rest |> parseMore {o with Wrap = false}
     | "-s" :: position :: rest ->
       let idx = position |> Int64.Parse |> SectionIndex.ByOffset
       rest |> parseMore {o with Sections = idx :: o.Sections}
@@ -119,8 +86,8 @@ let run args =
       if o.WikiId.IsNone then
         cp "\frNo wikidump specified\f0 (Missing \fo-wiki\f0 argument. Use \fowikidata list\f0 to find valid values)"
         None
-      else if o.Sections |> List.isEmpty && o.Wrap |> not then
-        cp "\frNo offsets (\fo-s\fr), indices (\fo-i\fr) or wrap flag (\fo-wrap\fr) specified\f0."
+      else if o.Sections |> List.isEmpty then
+        cp "\frNo offsets (\fo-s\fr) or indices (\fo-i\fr) specified\f0."
         None
       else
         Some({o with Sections = o.Sections |> List.rev})
@@ -128,15 +95,15 @@ let run args =
       cp $"\frUnrecognized argument\f0: \fo{x}\f0"
       None
   let oo = args |> parseMore {
-    Raw = false
-    Wrap = true
     WikiId = None
     Sections = []
   }
   match oo with
   | None ->
-    Usage.usage "extract"
+    cp "\fmNo specific documentation for 'dbg' available\f0."
+    Usage.usage "all"
     0
   | Some(o) ->
-    o |> runExtract
+    o |> runDbg
+
 
