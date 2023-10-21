@@ -114,11 +114,27 @@ public class WikiDump
   /// <summary>
   /// Find the index where to continue gathering the article index
   /// </summary>
-  /// <returns></returns>
-  /// <exception cref="NotImplementedException"></exception>
   public int NextArticleIndexStream()
   {
-    throw new NotImplementedException();
+    var sliceEnds = ArticleIndexSlices().Select(ais => ais.EndIndex).ToList();
+    return sliceEnds.Count == 0 ? 1 : (sliceEnds.Max()+1);
+  }
+
+  /// <summary>
+  /// Enumerate the partial article index slices found in the article index folder
+  /// </summary>
+  /// <returns></returns>
+  public IEnumerable<ArticleIndexSlice> ArticleIndexSlices()
+  {
+    var di = new DirectoryInfo(ArticleIndexFolderName);
+    foreach(var fi in di.EnumerateFiles($"{Id}.i-*.partidx.csv"))
+    {
+      var parts = fi.Name.Split('.');
+      if(parts.Length == 4)
+      {
+        yield return ArticleIndexSlice.ParseFileName(fi.FullName);
+      }
+    }
   }
 
   /// <summary>

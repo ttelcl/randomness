@@ -52,10 +52,10 @@ let usage detail =
   
   if showSynopsis "articleindex" then
     cp "\fowikidata articleindex\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-n\f0 <\fcstreamcount\f0>]"
-    cp "   Initialize or extend the article index, processing the next \fcn\f0 streams."
+    cp "   Initialize or extend the article index, processing the next \fcstreamcount\f0 streams."
   if showDescription "articleindex" then
     cp "   \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>   The wiki dump to extract from"
-    cp "   \fg-n\f0 <\fcstreamcount\f0>          The number of streams to process"
+    cp "   \fg-n\f0 <\fcstreamcount\f0>\fx\fx    The number of streams to process. Default 1000"
     cp ""
   
   if showSynopsis "extract" then
