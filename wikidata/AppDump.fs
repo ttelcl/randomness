@@ -47,7 +47,7 @@ let private runDumpSection o context idx =
   cpx $"Processing slice \fb{idx}\f0 of \fg{dump.Id}\f0 from \fc{offset}\f0 (\fC0x%08X{offset}\f0)"
   cp $" to \fc{offset+length-1L}\f0 (\fC0x%08X{offset+length-1L}\f0)."
   // let sliceFolder = $"{dump.Id}-s%06d{idx}-x%08X{offset}"
-  let sliceFolder = $"{dump.Id}-s%06d{idx}"
+  let sliceFolder = $"{dump.Id}-i%06d{idx}"
   let fld =
     let fld = Path.GetFullPath(sliceFolder)
     if fld |> Directory.Exists |> not then
@@ -169,6 +169,9 @@ let run args =
     | "-wiki" :: key :: rest ->
       let wdi = key |> WikiDumpId.Parse
       rest |> parseMore {o with WikiId = Some(wdi)}
+    | "-pos" :: position :: rest
+    | "-off" :: position :: rest
+    | "-offset" :: position :: rest
     | "-s" :: position :: rest ->
       let idx = position |> Int64.Parse |> SectionIndex.ByOffset
       rest |> parseMore {o with Sections = idx :: o.Sections}
@@ -195,7 +198,7 @@ let run args =
         cp "\frNo wikidump specified\f0 (Missing \fo-wiki\f0 argument. Use \fowikidata list\f0 to find valid values)"
         None
       else if o.Sections |> List.isEmpty then
-        cp "\frNo offsets (\fo-s\fr) or indices (\fo-i\fr) specified\f0."
+        cp "\frNo offsets (\fo-pos\fr) or indices (\fo-i\fr) specified\f0."
         None
       else
         Some({o with Sections = o.Sections |> List.rev})

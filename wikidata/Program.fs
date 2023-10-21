@@ -14,10 +14,10 @@ let rec run arglist =
     verbose <- true
     rest |> run
   | "--help" :: _
-  | "-h" :: _
-  | [] ->
+  | "-h" :: _ ->
     usage "all"
     0  // program return status code to the operating system; 0 == "OK"
+  | []
   | "-?" :: _ ->
     usage "short"
     0  // program return status code to the operating system; 0 == "OK"
@@ -42,7 +42,7 @@ let rec run arglist =
     rest |> AppDump.run
   | x :: _ ->
     cp $"\frUnrecognized argument\f0: \fo{x}\f0."
-    usage "all"
+    usage "short"
     1
 
 [<EntryPoint>]

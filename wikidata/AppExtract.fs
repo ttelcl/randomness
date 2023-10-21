@@ -109,6 +109,9 @@ let run args =
       rest |> parseMore {o with Wrap = true}
     | "-nowrap" :: rest ->
       rest |> parseMore {o with Wrap = false}
+    | "-pos" :: position :: rest
+    | "-off" :: position :: rest
+    | "-offset" :: position :: rest
     | "-s" :: position :: rest ->
       let idx = position |> Int64.Parse |> SectionIndex.ByOffset
       rest |> parseMore {o with Sections = idx :: o.Sections}
@@ -120,7 +123,7 @@ let run args =
         cp "\frNo wikidump specified\f0 (Missing \fo-wiki\f0 argument. Use \fowikidata list\f0 to find valid values)"
         None
       else if o.Sections |> List.isEmpty && o.Wrap |> not then
-        cp "\frNo offsets (\fo-s\fr), indices (\fo-i\fr) or wrap flag (\fo-wrap\fr) specified\f0."
+        cp "\frNo offsets (\fo-pos\fr), indices (\fo-i\fr) or wrap flag (\fo-wrap\fr) specified\f0."
         None
       else
         Some({o with Sections = o.Sections |> List.rev})
