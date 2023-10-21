@@ -51,12 +51,11 @@ let usage detail =
     cp ""
   
   if showSynopsis "articleindex" then
-    cp "\fowikidata articleindex\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-n\f0 <streamcount\f0>] [\fg-split\f0]"
+    cp "\fowikidata articleindex\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-n\f0 <\fcstreamcount\f0>]"
     cp "   Initialize or extend the article index, processing the next \fcn\f0 streams."
   if showDescription "articleindex" then
     cp "   \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>   The wiki dump to extract from"
-    cp "   \fg-split\f0\fx\fx\fx\fx              Create per-stream index files"
-    cp "   \fg-n\f0 <streamcount\f0>             The number of streams to process"
+    cp "   \fg-n\f0 <\fcstreamcount\f0>          The number of streams to process"
     cp ""
   
   if showSynopsis "extract" then

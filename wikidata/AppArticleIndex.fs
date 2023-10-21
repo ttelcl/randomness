@@ -2,16 +2,25 @@
 
 open System
 open System.IO
+open System.Text
+open System.Xml
 
-open Newtonsoft.Json
-open ICSharpCode.SharpZipLib.BZip2
+open XsvLib
 
-open WikiDataLib.Configuration
 open WikiDataLib.Repository
-open WikiDataLib.Utilities
 
 open ColorPrint
 open CommonTools
+
+type private ArtIdxOptions = {
+  WikiId: WikiDumpId option
+  StreamCount: int
+}
+
+type WikiContext = {
+  Dump: WikiDump
+  SubIndex: SubstreamIndex
+}
 
 let run args =
   0

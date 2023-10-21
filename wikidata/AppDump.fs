@@ -12,8 +12,6 @@ open WikiDataLib.Repository
 open ColorPrint
 open CommonTools
 
-// wikidata dbg -wiki enwiki-20230920 -i 1 -xml -xml+
-
 type private SectionIndex =
   | ByOffset of int64
   | ByIndex of int
@@ -116,13 +114,7 @@ let private runDumpSection o context idx =
       ()
     if o.SaveIndex then
       let indexname = $"{dump.Id}-i%06d{idx}.articles.csv"
-      do
-        use indexfile = indexname |> startFile
-        let buffer = new ArticleIndexRowBuffer()
-        let itrw = Xsv.WriteXsv(indexfile, indexname, buffer.Count)
-        buffer.WriteXsv(itrw, articleIndex.Rows, true)
-        ()
-      indexname |> finishFile
+      articleIndex.Save(indexname)
   finally
     Environment.CurrentDirectory <- currentDir
   0

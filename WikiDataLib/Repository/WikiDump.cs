@@ -34,6 +34,11 @@ public class WikiDump
     MainRawIndexFileName = Path.Combine(Folder, $"{Id}-pages-articles-multistream-index.txt.bz2");
     MainIndexFileName = Path.Combine(Folder, $"{Id}-pages-articles-multistream-index.txt");
     StreamIndexFileName = Path.Combine(Folder, $"{Id}.stream-index.csv");
+    ArticleIndexFolderName = Path.Combine(Folder, "article-index");
+    if(!Directory.Exists(ArticleIndexFolderName))
+    {
+      Directory.CreateDirectory(ArticleIndexFolderName);
+    }
     Synchronize();
   }
 
@@ -55,7 +60,7 @@ public class WikiDump
   /// <summary>
   /// The folder containing the files for this dump
   /// </summary>
-  public string Folder {  get; init; }
+  public string Folder { get; init; }
 
   /// <summary>
   /// The full path to the main dump file (which may or may not yet exist).
@@ -100,6 +105,21 @@ public class WikiDump
   /// True if the stream index file is present (and complete)
   /// </summary>
   public bool HasStreamIndex { get => File.Exists(StreamIndexFileName); }
+
+  /// <summary>
+  /// The full path to the folder holding the partial article index files
+  /// </summary>
+  public string ArticleIndexFolderName { get; init; }
+
+  /// <summary>
+  /// Find the index where to continue gathering the article index
+  /// </summary>
+  /// <returns></returns>
+  /// <exception cref="NotImplementedException"></exception>
+  public int NextArticleIndexStream()
+  {
+    throw new NotImplementedException();
+  }
 
   /// <summary>
   /// Synchronize the state of this instance with the disk state.
