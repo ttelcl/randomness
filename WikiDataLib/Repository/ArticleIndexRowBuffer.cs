@@ -19,7 +19,7 @@ namespace WikiDataLib.Repository;
 /// </summary>
 public class ArticleIndexRowBuffer: XsvBuffer
 {
-  private readonly XsvTypedAccessor<int> _pageId;
+  private readonly XsvTypedAccessor<long> _pageId;
   private readonly XsvTypedAccessor<int> _streamId;
   private readonly XsvTypedAccessor<string> _title;
   private readonly XsvTypedAccessor<int> _bytecount;
@@ -40,7 +40,7 @@ public class ArticleIndexRowBuffer: XsvBuffer
   {
     AdapterLibrary
       .RegisterDateTimeIsoSeconds("datetime", true);
-    _pageId = Declare<int>("pageId");
+    _pageId = Declare<long>("pageId");
     _streamId = Declare<int>("streamId");
     _title = Declare<string>("title");
     _bytecount = Declare<int>("bytecount");
@@ -86,6 +86,38 @@ public class ArticleIndexRowBuffer: XsvBuffer
       _bytecount.Get(),
       _revision.Get(),
       _timestamp.Get());
+  }
+
+  /// <summary>
+  /// Read the article index rows
+  /// </summary>
+  public static IEnumerable<ArticleIndexRow> ReadXsv(ITextRecordReader itrr)
+  {
+    var reader = new XsvReader(itrr, true);
+    var buffer = new ArticleIndexRowBuffer(reader.Header);
+    foreach(var textrow in reader.ReadRecords())
+    {
+      buffer.Attach(textrow);
+      yield return buffer.GetRow();
+      buffer.Detach();
+    }
+  }
+
+  /// <summary>
+  /// Write the article index rows using this buffer
+  /// </summary>
+  public void WriteXsv(ITextRecordWriter itrw, IEnumerable<ArticleIndexRow> rows, bool writeHeader = true)
+  {
+    if(writeHeader)
+    {
+      WriteHeader(itrw);
+    }
+    Attach(new string[Count]);
+    foreach(var row in rows)
+    {
+      PutRow(row);
+      WriteRow(itrw);
+    }
   }
 
 }

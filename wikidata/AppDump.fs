@@ -3,17 +3,14 @@
 open System
 open System.IO
 open System.Text
+open System.Xml
 
-open Newtonsoft.Json
-open ICSharpCode.SharpZipLib.BZip2
+open XsvLib
 
-open WikiDataLib.Configuration
 open WikiDataLib.Repository
-open WikiDataLib.Utilities
 
 open ColorPrint
 open CommonTools
-open System.Xml
 
 // wikidata dbg -wiki enwiki-20230920 -i 1 -xml -xml+
 
@@ -32,6 +29,7 @@ type private DbgOptions = {
   DumpXml: DumpOption
   DumpText: DumpOption
   AllNamespaces: bool
+  SaveIndex: bool
 }
 
 type WikiContext = {
@@ -56,10 +54,10 @@ let private runDumpSection o context idx =
     else
       cp $"Slice folder \fg{sliceFolder}\f0 (\fkexisting\f0)"
     fld
+  let articleIndex = new ArticleIndex()
   let currentDir = Environment.CurrentDirectory
   try
     Environment.CurrentDirectory <- fld
-    let mutable counter = 0
     cp $"Processing slice. Press \foCTRL-C\f0 to abort after current element"
     use host = dump.OpenMainDump()
     use slice = subindex.OpenConcatenation(host, [idx], true)
@@ -69,10 +67,7 @@ let private runDumpSection o context idx =
       |> Seq.takeWhile (fun _ -> canceled() |> not)
     for xpdoc in documents do
       let wxp = new WikiXmlPage(xpdoc)
-      let revisionId = wxp.RevisionId
-      let contentSize = wxp.RequiredString("revision/text/@bytes") |> Int32.Parse
       let nsid = wxp.NamespaceId
-      let nstext = $"#{nsid}"
       let redirect = wxp.RedirectTitle
       let redirectText = if redirect = null then "" else $" -> [\f0{redirect}\f0]"
       let titleColor = if redirect = null then "\fy" else "\fk"
@@ -114,7 +109,20 @@ let private runDumpSection o context idx =
         cp $"     \fc{sliceFolder}\f0/\fg{shortTextName}\f0 : \foSaving WikiText\f0."
         let text = wxp.RequiredString("revision/text")
         File.WriteAllText(textName, text)
-      counter <- counter + 1
+      if o.SaveIndex then
+        let row = wxp.MakeArticleIndexRow(idx)
+        if row <> null then
+          articleIndex.Put(row)
+      ()
+    if o.SaveIndex then
+      let indexname = $"{dump.Id}-i%06d{idx}.articles.csv"
+      do
+        use indexfile = indexname |> startFile
+        let buffer = new ArticleIndexRowBuffer()
+        let itrw = Xsv.WriteXsv(indexfile, indexname, buffer.Count)
+        buffer.WriteXsv(itrw, articleIndex.Rows, true)
+        ()
+      indexname |> finishFile
   finally
     Environment.CurrentDirectory <- currentDir
   0
@@ -193,6 +201,8 @@ let run args =
       rest |> parseMore {o with DumpText = DumpOption.All}
     | "-allns" :: rest ->
       rest |> parseMore {o with AllNamespaces = true}
+    | "-index" :: rest ->
+      rest |> parseMore {o with SaveIndex = true}
     | [] ->
       if o.WikiId.IsNone then
         cp "\frNo wikidump specified\f0 (Missing \fo-wiki\f0 argument. Use \fowikidata list\f0 to find valid values)"
@@ -211,6 +221,7 @@ let run args =
     DumpXml = DumpOption.NoDump
     DumpText = DumpOption.NoDump
     AllNamespaces = false
+    SaveIndex = false
   }
   match oo with
   | None ->

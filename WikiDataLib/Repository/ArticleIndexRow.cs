@@ -3,13 +3,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using XsvLib;
 
 namespace WikiDataLib.Repository;
 
@@ -22,7 +15,7 @@ public class ArticleIndexRow
   /// Create a new ArticleIndexRow
   /// </summary>
   public ArticleIndexRow(
-    int pageId,
+    long pageId,
     int streamId,
     string title,
     int byteCount,
@@ -40,10 +33,10 @@ public class ArticleIndexRow
   /// <summary>
   /// The page ID
   /// </summary>
-  public int PageId { get; init; }
+  public long PageId { get; init; }
 
   /// <summary>
-  /// The index of the stream containing the page content
+  /// The index of the substream containing the page content
   /// </summary>
   public int StreamId { get; init; }
 
@@ -66,34 +59,4 @@ public class ArticleIndexRow
   /// The number of bytes in the content
   /// </summary>
   public int ByteCount { get; init; }
-
-  /// <summary>
-  /// Read the article index rows
-  /// </summary>
-  public static IEnumerable<ArticleIndexRow> ReadXsv(ITextRecordReader itrr)
-  {
-    var reader = new XsvReader(itrr, true);
-    var buffer = new ArticleIndexRowBuffer(reader.Header);
-    foreach(var textrow in reader.ReadRecords())
-    {
-      buffer.Attach(textrow);
-      yield return buffer.GetRow();
-      buffer.Detach();
-    }
-  }
-
-  /// <summary>
-  /// Write the article index rows
-  /// </summary>
-  public static void WriteXsv(ITextRecordWriter itrw, IEnumerable<ArticleIndexRow> rows)
-  {
-    var buffer = new ArticleIndexRowBuffer();
-    buffer.WriteHeader(itrw);
-    buffer.Attach(new string[buffer.Count]);
-    foreach(var row in rows)
-    {
-      buffer.PutRow(row);
-      buffer.WriteRow(itrw);
-    }
-  }
 }

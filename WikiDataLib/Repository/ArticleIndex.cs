@@ -12,18 +12,19 @@ using System.Threading.Tasks;
 namespace WikiDataLib.Repository;
 
 /// <summary>
-/// Table with article descriptors
+/// Table with article descriptors. Articles are wiki pages in namespace 0 that
+/// are not redirects.
 /// </summary>
 public class ArticleIndex
 {
-  private Dictionary<int, ArticleIndexRow> _rowsById;
+  private readonly Dictionary<long, ArticleIndexRow> _rowsById;
 
   /// <summary>
   /// Create a new ArticleIndex
   /// </summary>
   public ArticleIndex()
   {
-    _rowsById = new Dictionary<int, ArticleIndexRow>();
+    _rowsById = new Dictionary<long, ArticleIndexRow>();
   }
 
   /// <summary>

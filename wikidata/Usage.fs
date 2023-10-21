@@ -40,13 +40,14 @@ let usage detail =
   
   if showSynopsis "dump" then
     cpx "\fowikidata dump\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-i\f0 <\fcindex\f0>|\fg-pos\f0 <\fcposition\f0>]"
-    cp " [\fg-xml\f0|\fg-xml+\f0] [\fg-text\f0|\fg-text+\f0] [\fg-allns\f0]" 
+    cp " [\fg-xml\f0|\fg-xml+\f0] [\fg-text\f0|\fg-text+\f0] [\fg-allns\f0] [\fg-index\f0]" 
     cp "   List pages available in a dump slice and optionally dump page documents in XML or wikitext form"
   if showDescription "dump" then
     cp "   \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>   The wiki dump to take the slice from"
     cp "   \fg-xml\f0\fx\fx\fx\fx                Dump XML for articles. \fg-xml+\f0: also redirects"
     cp "   \fg-text\f0\fx\fx\fx\fx               Dump wikitext for articles. \fg-text+\f0: also redirects"
     cp "   \fg-allns\f0\fx\fx\fx\fx              Modifies \fg-xml\f0 and \fg-txt\f0 to process all namespaces, not just articles"
+    cp "   \fg-index\f0\fx\fx\fx\fx              Also save an article index file"
     cp ""
   
   if showSynopsis "articleindex" then
