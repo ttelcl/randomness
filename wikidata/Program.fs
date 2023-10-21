@@ -38,8 +38,8 @@ let rec run arglist =
     rest |> AppExtract.run
   | "articleindex" :: rest ->
     rest |> AppArticleIndex.run
-  | "dbg" :: rest ->
-    rest |> AppDbg.run
+  | "dump" :: rest ->
+    rest |> AppDump.run
   | x :: _ ->
     cp $"\frUnrecognized argument\f0: \fo{x}\f0."
     usage "all"

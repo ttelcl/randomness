@@ -1,4 +1,4 @@
-﻿module AppDbg
+﻿module AppDump
 
 open System
 open System.IO
@@ -21,15 +21,17 @@ type private SectionIndex =
   | ByOffset of int64
   | ByIndex of int
 
-type private XmlDumpOption =
-  | NoXml
+type private DumpOption =
+  | NoDump
   | Article
   | All
 
 type private DbgOptions = {
   Sections: SectionIndex list
   WikiId: WikiDumpId option  
-  DumpXml: XmlDumpOption
+  DumpXml: DumpOption
+  DumpText: DumpOption
+  AllNamespaces: bool
 }
 
 type WikiContext = {
@@ -37,7 +39,7 @@ type WikiContext = {
   SubIndex: SubstreamIndex
 }
 
-let private runDbgSection o context idx =
+let private runDumpSection o context idx =
   let subindex = context.SubIndex
   let dump = context.Dump
   let offset = subindex.Offsets[idx]
@@ -67,46 +69,57 @@ let private runDbgSection o context idx =
       |> Seq.takeWhile (fun _ -> canceled() |> not)
     for xpdoc in documents do
       let wxp = new WikiXmlPage(xpdoc)
+      let revisionId = wxp.RevisionId
+      let contentSize = wxp.RequiredString("revision/text/@bytes") |> Int32.Parse
+      let nsid = wxp.NamespaceId
+      let nstext = $"#{nsid}"
+      let redirect = wxp.RedirectTitle
+      let redirectText = if redirect = null then "" else $" -> [\f0{redirect}\f0]"
+      let titleColor = if redirect = null then "\fy" else "\fk"
+      let shortXmlName = $"{dump.Id}-p%08d{wxp.Id}.xml"
+      let xmlName = Path.Combine(fld, shortXmlName)
+      let xmlMissing = xmlName |> File.Exists |> not
+      let xmlTag = if xmlMissing then "\fk-xml\f0" else "\fb+xml\f0"
+      let shortTextName = $"{dump.Id}-p%08d{wxp.Id}.wiki.txt"
+      let textName = Path.Combine(fld, shortTextName)
+      let textMissing = textName |> File.Exists |> not
+      let textTag = if textMissing then "\fk-txt\f0" else "\fb+txt\f0"
       let titleparts = wxp.Title.Split(':', 2)
       let titleFormatted =
         match titleparts.Length with
         | 0 -> "\fr???\f0"
-        | 1 -> $"\fy{titleparts[0]}\f0"
-        | 2 -> $"\fo{titleparts[0]}\f0:\fy{titleparts[1]}\f0"
+        | 1 -> $"{titleColor}{titleparts[0]}\f0"
+        | 2 -> $"\fo{titleparts[0]}\f0:{titleColor}{titleparts[1]}\f0"
         | x -> failwith $"Unexpected split length from '{wxp.Title}' ({x})"
-      let revisionId = wxp.RevisionId
-      let contentSize = wxp.RequiredString("revision/text/@bytes") |> Int32.Parse
-      let redirect = wxp.RedirectTitle
-      let redirectText =
-        if redirect = null then
-          ""
-        else
-          $" -> [\f0{redirect}\f0]"
-      cp $"\fb%02d{counter}\f0 \fcp%08d{wxp.Id}\f0 [{titleFormatted}]{redirectText} (\fk{contentSize}\f0)"
+      cp $"\fcp%08d{wxp.Id}\f0 {xmlTag} {textTag} [{titleFormatted}]{redirectText}"
+      let doNs = nsid = 0 || o.AllNamespaces
       let doXml =
         match o.DumpXml with
-        | XmlDumpOption.NoXml -> false
-        | XmlDumpOption.Article -> redirect = null
-        | XmlDumpOption.All -> true
+        | DumpOption.NoDump -> false
+        | DumpOption.Article -> redirect = null && xmlMissing && doNs
+        | DumpOption.All -> xmlMissing && doNs
       if doXml then
-        let shortName = $"{dump.Id}-p%08d{wxp.Id}.xml"
-        let onm = Path.Combine(fld, shortName)
-        if onm |> File.Exists then
-          cp $"     {sliceFolder}/{shortName} : \fkalready exists\f0."
-        else
-          cp $"     \fc{sliceFolder}\f0/\fg{shortName}\f0 : \foSaving\f0."
-          use xw = new XmlTextWriter(onm, Encoding.UTF8)
-          xw.Formatting <- Formatting.Indented
-          let nav = wxp.Doc.CreateNavigator()
-          xw.WriteStartDocument()
-          nav.WriteSubtree(xw)
-          ()
+        cp $"     \fc{sliceFolder}\f0/\fg{shortXmlName}\f0 : \foSaving XML\f0."
+        use xw = new XmlTextWriter(xmlName, Encoding.UTF8)
+        xw.Formatting <- Formatting.Indented
+        let nav = wxp.Doc.CreateNavigator()
+        xw.WriteStartDocument()
+        nav.WriteSubtree(xw)
+      let doText =
+        match o.DumpText with
+        | DumpOption.NoDump -> false
+        | DumpOption.Article -> redirect = null && textMissing && doNs
+        | DumpOption.All -> textMissing && doNs
+      if doText then
+        cp $"     \fc{sliceFolder}\f0/\fg{shortTextName}\f0 : \foSaving WikiText\f0."
+        let text = wxp.RequiredString("revision/text")
+        File.WriteAllText(textName, text)
       counter <- counter + 1
   finally
     Environment.CurrentDirectory <- currentDir
   0
 
-let private runDbg o =
+let private runDump o =
   let repo = new WikiRepo()
   let wikiId =
     match o.WikiId with
@@ -140,7 +153,7 @@ let private runDbg o =
   }
   for si in o.Sections do
     let idx = si |> sectionIndexToIndex
-    let result = idx |> runDbgSection o context
+    let result = idx |> runDumpSection o context
     if result <> 0 then
       failwith $"Aborting because of error status '{result}'"
   0
@@ -164,9 +177,19 @@ let run args =
       rest |> parseMore {o with Sections = idx :: o.Sections}
     | "-xml" :: rest 
     | "-xml-" :: rest ->
-      rest |> parseMore {o with DumpXml = XmlDumpOption.Article}
+      rest |> parseMore {o with DumpXml = DumpOption.Article}
     | "-xml+" :: rest ->
-      rest |> parseMore {o with DumpXml = XmlDumpOption.All}
+      rest |> parseMore {o with DumpXml = DumpOption.All}
+    | "-txt" :: rest 
+    | "-txt-" :: rest 
+    | "-text" :: rest 
+    | "-text-" :: rest ->
+      rest |> parseMore {o with DumpText = DumpOption.Article}
+    | "-txt+" :: rest 
+    | "-text+" :: rest ->
+      rest |> parseMore {o with DumpText = DumpOption.All}
+    | "-allns" :: rest ->
+      rest |> parseMore {o with AllNamespaces = true}
     | [] ->
       if o.WikiId.IsNone then
         cp "\frNo wikidump specified\f0 (Missing \fo-wiki\f0 argument. Use \fowikidata list\f0 to find valid values)"
@@ -182,14 +205,15 @@ let run args =
   let oo = args |> parseMore {
     WikiId = None
     Sections = []
-    DumpXml = XmlDumpOption.NoXml
+    DumpXml = DumpOption.NoDump
+    DumpText = DumpOption.NoDump
+    AllNamespaces = false
   }
   match oo with
   | None ->
-    cp "\fmNo specific documentation for 'dbg' available\f0."
-    Usage.usage "all"
+    Usage.usage "dump"
     0
   | Some(o) ->
-    o |> runDbg
+    o |> runDump
 
 

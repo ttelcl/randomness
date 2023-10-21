@@ -64,6 +64,11 @@ public class WikiXmlPage
   public int ContentSize { get => Int32.Parse(RequiredString("revision/text/@bytes")); }
 
   /// <summary>
+  /// Get the MediaWiki namespace ID. This is 0 for normal articles
+  /// </summary>
+  public int NamespaceId { get => Int32.Parse(RequiredString("ns")); }
+
+  /// <summary>
   /// The time stamp (as ISO formatted UTC time, including the trailing 'Z')
   /// </summary>
   public string Timestamp { get => RequiredString("revision/timestamp"); }

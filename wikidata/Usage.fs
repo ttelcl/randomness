@@ -31,8 +31,16 @@ let usage detail =
     cp "\fowikidata streamindex\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>"
   if showDescription "streamindex" then
     cp "   Initialize or update the stream index for a dump, if missing."
-    //cp "   \fg-file\f0 <\fcfilename\f0>      (For debug purposes)"
-    //cp "   \fg-n\f0 <\fccount\f0>            Abort after count streams (for debug purposes)"
+    cp ""
+  if showSynopsis "dump" then
+    cpx "\fowikidata dump\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-i\f0 <\fcindex\f0>|\fg-s\f0 <\fcposition\f0>]"
+    cp " [\fg-xml\f0|\fg-xml+\f0] [\fg-text\f0|\fg-text+\f0] [\fg-allns\f0]" 
+  if showDescription "dump" then
+    cp "   List pages available in a dump slice and optionally dump page documents in XML or wikitext form"
+    cp "   \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>   The wiki dump to take the slice from"
+    cp "   \fg-xml\f0\fx\fx\fx\fx                Dump XML for articles. \fg-xml+\f0: also redirects"
+    cp "   \fg-text\f0\fx\fx\fx\fx               Dump wikitext for articles. \fg-text+\f0: also redirects"
+    cp "   \fg-allns\f0\fx\fx\fx\fx              Modifies \fg-xml\f0 and \fg-txt\f0 to process all namespaces, not just articles"
     cp ""
   if showSynopsis "articleindex" then
     cp "\fowikidata articleindex\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-n\f0 <streamcount\f0>] [\fg-split\f0]"
