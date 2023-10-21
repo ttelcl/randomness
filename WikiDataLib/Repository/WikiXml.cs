@@ -26,7 +26,7 @@ public static class WikiXml
   /// </summary>
   public static XmlReaderSettings CreateFragmentReaderSettings()
   {
-    var settings = new XmlReaderSettings(){ 
+    var settings = new XmlReaderSettings() {
       ConformanceLevel = ConformanceLevel.Fragment,
       CheckCharacters = false,
       CloseInput = false,
@@ -69,5 +69,38 @@ public static class WikiXml
       }
     }
   }
+
+  /// <summary>
+  /// Read a series of page fragment "documents" from the XML fragment stream.
+  /// The {page} elements are expected to not be in any XML namespace
+  /// </summary>
+  public static IEnumerable<XPathDocument> ReadPageFragments(TextReader tr)
+  {
+    using(var xr = WrapFragments(tr))
+    {
+      foreach(var xpd in ReadPageFragments(xr))
+      {
+        yield return xpd;
+      }
+    }
+  }
+
+  /// <summary>
+  /// Read a series of page fragment "documents" from the XML fragment stream
+  /// (assumed to be UTF8 text).
+  /// The {page} elements are expected to not be in any XML namespace
+  /// </summary>
+  public static IEnumerable<XPathDocument> ReadPageFragments(Stream stream)
+  {
+    using(var tr = new StreamReader(stream, Encoding.UTF8, false))
+    using(var xr = WrapFragments(tr))
+    {
+      foreach(var xpd in ReadPageFragments(xr))
+      {
+        yield return xpd;
+      }
+    }
+  }
+
 
 }

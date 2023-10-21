@@ -19,21 +19,23 @@ namespace WikiDataLib.Repository;
 /// </summary>
 public class WikiXmlPage
 {
+  private XPathNavigator _pageNavigator;
+
   /// <summary>
   /// Create a new WikiXmlPage
   /// </summary>
   public WikiXmlPage(XPathDocument doc)
   {
     Doc = doc;
-    var nav = Doc.CreateNavigator();
-    nav.MoveToRoot();
-    if(nav.Name != "path")
+    var nav = CreateNewPageNavigator();
+    if(nav.Name != "page")
     {
       throw new InvalidDataException(
-        $"Expecting '<path>' as root element, but found '{nav.Name}'");
+        $"Expecting '<page>' as root element, but found '{nav.Name}'");
     }
-    Id = Int64.Parse(EvaluateRequiredString(nav, "string(id)"));
-    Title = EvaluateRequiredString(nav, "string(title)");
+    _pageNavigator = nav;
+    Id = Int64.Parse(EvaluateRequiredString("id", nav));
+    Title = EvaluateRequiredString("title", nav);
   }
 
   /// <summary>
@@ -52,12 +54,69 @@ public class WikiXmlPage
   public string Title { get; init; }
 
   /// <summary>
-  /// The namespace for MediaWiki XML dumps (version 0.10)
+  /// Get the revision ID
   /// </summary>
-  public const string MediaWikiNamespace010 = "http://www.mediawiki.org/xml/export-0.10/";
+  public long RevisionId { get => Int64.Parse(RequiredString("revision/id")); }
 
-  private static string EvaluateRequiredString(XPathNavigator nav, string xpath)
+  /// <summary>
+  /// The number of bytes in the content
+  /// </summary>
+  public int ContentSize { get => Int32.Parse(RequiredString("revision/text/@bytes")); }
+
+  /// <summary>
+  /// The time stamp (as ISO formatted UTC time, including the trailing 'Z')
+  /// </summary>
+  public string Timestamp { get => RequiredString("revision/timestamp"); }
+
+  /// <summary>
+  /// The title this page redirects to, if any
+  /// </summary>
+  public string? RedirectTitle { get => EvaluateString("redirect/@title"); }
+
+  /// <summary>
+  /// Returns a clone of the default page navigator
+  /// </summary>
+  public XPathNavigator PageNavigator { get => _pageNavigator.Clone(); }
+
+  /// <summary>
+  /// Create a new XPath navigator, positioned on the {page} element
+  /// </summary>
+  public XPathNavigator CreateNewPageNavigator()
   {
+    var nav = Doc.CreateNavigator();
+    nav.MoveToRoot();
+    nav.MoveToFirstChild();
+    return nav;
+  }
+
+  /// <summary>
+  /// Evaluate the xpath expression wrapped in "string(...)" against
+  /// the page root element.
+  /// Throw an exception if the result is null or empty
+  /// </summary>
+  public string RequiredString(string xpath)
+  {
+    return EvaluateRequiredString(xpath, PageNavigator);
+  }
+
+  /// <summary>
+  /// Evaluate the xpath expression wrapped in "string(...)" against
+  /// the page root element. May return null or an empty string
+  /// </summary>
+  public string? EvaluateString(string xpath)
+  {
+    var value = EvaluateString(xpath, PageNavigator);
+    return String.IsNullOrEmpty(value) ? null : value;
+  }
+
+  /// <summary>
+  /// Wraps the experssion <paramref name="xpath"/> in "string(...)" and
+  /// evaluates it against the navigator <paramref name="nav"/>.
+  /// An exception is thrown if the result is null or empty
+  /// </summary>
+  public static string EvaluateRequiredString(string xpath, XPathNavigator nav)
+  {
+    xpath = "string(" + xpath + ")";
     var value = nav.Evaluate(xpath) as string;
     if(String.IsNullOrEmpty(value))
     {
@@ -66,4 +125,17 @@ public class WikiXmlPage
     }
     return value;
   }
+
+  /// <summary>
+  /// Wraps the experssion <paramref name="xpath"/> in "string(...)" and
+  /// evaluates it against the navigator <paramref name="nav"/>.
+  /// The return value may be null or empty.
+  /// </summary>
+  public static string? EvaluateString(string xpath, XPathNavigator nav)
+  {
+    xpath = "string(" + xpath + ")";
+    var value = nav.Evaluate(xpath) as string;
+    return value;
+  }
+
 }
