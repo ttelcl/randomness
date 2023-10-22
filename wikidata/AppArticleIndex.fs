@@ -27,6 +27,51 @@ type WikiContext = {
   SubIndex: SubstreamIndex
 }
 
+let private runArtIdxChunk context streamCount =
+  let dump = context.Dump
+  let slices = dump.ArticleIndexSlices() |> Seq.sortBy (fun s -> s.StartIndex) |> Seq.toList
+  for (slice1, slice2) in slices |> List.pairwise do // validate
+    if slice1.EndIndex + 1 <> slice2.StartIndex then
+      cpx $"\frError!\f0 Malformed article index. Expecting slices \fc{slice1.StartIndex}\f0-\fc{slice1.EndIndex}\f0"
+      cp $" and \fc{slice2.StartIndex}\f0-\fc{slice2.EndIndex}\f0 to be contiguous"
+  let rec groupSlices result accu accucount (slices: ArticleIndexSlice list) =
+    match slices with
+    | slice :: rest ->
+      let slicelength = slice.EndIndex - slice.StartIndex + 1
+      let totalcount = slicelength + accucount
+      if totalcount <= streamCount || accucount = 0 then
+        // accu list is empty or has space to grow with the current slice
+        let nextAccu = slice :: accu
+        rest |> groupSlices result nextAccu totalcount
+      else
+        // accu list is not empty and would grow too large if further extended
+        let group = accu |> List.rev
+        let nextResult = group :: result
+        rest |> groupSlices nextResult [ slice ] slicelength
+    | [] ->
+      if accu |> List.isEmpty then
+        result |> List.rev
+      else
+        let group = accu |> List.rev
+        group :: result |> List.rev
+  match slices.Length with
+  | 0 ->
+    cp "\foThe article index is empty. No chunks to merge ...\f0"
+    0
+  | 1 ->
+    cp "\foThe article index has only one entry. No chunks to merge ...\f0"
+    0
+  | _ ->
+    let groupedSlices = slices |> groupSlices [] [] 0
+    cp "\foDBG\f0:"
+    for slicelist in groupedSlices do
+      cpx "["
+      for slice in slicelist do
+        cpx $" \fc{slice.StartIndex}\f0-\fc{slice.EndIndex}\f0"
+      cp " ]"
+    failwith "NYI - '-chunk'"
+    0
+
 let private runArtIdxUpdate context streamCount =
   let dump = context.Dump
   let subindex = context.SubIndex
@@ -81,7 +126,7 @@ let private runArtIdx o =
     | Some(Update(streamCount)) ->
       runArtIdxUpdate context streamCount
     | Some(Chunk(streamCount)) ->
-      failwith "NYI - '-chunk'"
+      runArtIdxChunk context streamCount
 
 let run args =
   let rec parseMore o args =
