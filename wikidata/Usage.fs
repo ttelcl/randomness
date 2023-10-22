@@ -51,11 +51,13 @@ let usage detail =
     cp ""
   
   if showSynopsis "articleindex" then
-    cp "\fowikidata articleindex\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-n\f0 <\fcstreamcount\f0>]"
-    cp "   Initialize or extend the article index, processing the next \fcstreamcount\f0 streams."
+    cp "\fowikidata articleindex\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-n\f0 <\fccount\f0>|\fg-N\f0|\fg-chunk\f0 <\fccount\f0>]"
+    cp "   Initialize, extend, or compact the article index, processing the next \fcstreamcount\f0 streams."
   if showDescription "articleindex" then
     cp "   \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>   The wiki dump to extract from"
-    cp "   \fg-n\f0 <\fcstreamcount\f0>\fx\fx    The number of streams to process. Default 1000"
+    cp "   \fg-n\f0 <\fccount\f0>\fx\fx          The number of streams to add. Mutually exclusive with \fg-chunk\f0."
+    cp "   \fg-N\f0 \fx\fx\fx\fx                 Shorthand for \fg-n \fc1000\f0."
+    cp "   \fg-chunk\f0 <\fccount\f0>\fx\fx      Merge partial indices in chunks of \fccount\f0 streams. Mutually exclusive with \fg-n\f0 and \fg-N\f0"
     cp ""
   
   if showSynopsis "extract" then

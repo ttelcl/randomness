@@ -12,9 +12,14 @@ open WikiDataLib.Repository
 open ColorPrint
 open CommonTools
 
+type private ArtIdxSubcommand =
+  | Update of int
+  | Chunk of int
+
+
 type private ArtIdxOptions = {
   WikiId: WikiDumpId option
-  StreamCount: int
+  Subcommand: ArtIdxSubcommand option
 }
 
 type WikiContext = {
@@ -22,18 +27,11 @@ type WikiContext = {
   SubIndex: SubstreamIndex
 }
 
-let private runArtIdx o =
-  let repo = new WikiRepo()
-  let wikiId =
-    match o.WikiId with
-    | Some(wid) -> wid
-    | None -> failwith "No WikiDump selected"
-  let dump = wikiId |> repo.GetDumpFolder
-  if dump.HasStreamIndex |> not then
-    failwith $"'{wikiId}' has no stream index yet (run 'wikidata index -wiki {wikiId}' to create it)"
-  let subindex = dump.LoadIndex()
+let private runArtIdxUpdate context streamCount =
+  let dump = context.Dump
+  let subindex = context.SubIndex
   let firstStreamIndex = dump.NextArticleIndexStream();
-  let lastStreamIndex = firstStreamIndex + o.StreamCount - 1
+  let lastStreamIndex = firstStreamIndex + streamCount - 1
   let lastStreamIndex =
     if lastStreamIndex >= subindex.Count-1 then subindex.Count-2 else lastStreamIndex
   if firstStreamIndex > lastStreamIndex then
@@ -42,7 +40,7 @@ let private runArtIdx o =
   else
     cp $"Processing streams \fb{firstStreamIndex}\f0 - \fb{lastStreamIndex}\f0:"
     let articleIndex = new ArticleIndex();
-    let ais = new ArticleIndexSlice(dump.ArticleIndexFolderName, wikiId, firstStreamIndex, lastStreamIndex)
+    let ais = new ArticleIndexSlice(dump.ArticleIndexFolderName, dump.Id, firstStreamIndex, lastStreamIndex)
     use host = dump.OpenMainDump()
     for si in firstStreamIndex .. lastStreamIndex do
       cpx $"  Processing stream \fb{si}\f0 ...      "
@@ -62,6 +60,29 @@ let private runArtIdx o =
     articleIndex.Save(ais.FileName)
     0
 
+let private runArtIdx o =
+  let repo = new WikiRepo()
+  let wikiId =
+    match o.WikiId with
+    | Some(wid) -> wid
+    | None -> failwith "No WikiDump selected"
+  let dump = wikiId |> repo.GetDumpFolder
+  if dump.HasStreamIndex |> not then
+    failwith $"'{wikiId}' has no stream index yet (run 'wikidata index -wiki {wikiId}' to create it)"
+  let subindex = dump.LoadIndex()
+  let context = {
+    SubIndex = subindex
+    Dump = dump
+  }
+  match o.Subcommand with
+    | None ->
+      cp "\frError: expecting one of\f0: \fo-n\f0, \fo-N\f0, \fo-chunk\f0"
+      1
+    | Some(Update(streamCount)) ->
+      runArtIdxUpdate context streamCount
+    | Some(Chunk(streamCount)) ->
+      failwith "NYI - '-chunk'"
+
 let run args =
   let rec parseMore o args =
     match args with
@@ -77,7 +98,19 @@ let run args =
       let n = count |> Int32.Parse
       if n < 1 then
         failwith "Invalid stream count (minimum is 1)"
-      rest |> parseMore {o with StreamCount = n}
+      if o.Subcommand.IsSome then
+        failwith "'-n', '-N' and '-chunk' are mutually exclusive"
+      rest |> parseMore {o with Subcommand = Some(Update(n))}
+    | "-N" :: rest ->
+      let rest2 = "-n" :: "1000" :: rest
+      rest2 |> parseMore o
+    | "-chunk" :: count :: rest ->
+      if o.Subcommand.IsSome then
+        failwith "'-chunk', '-n' and '-N' are mutually exclusive"
+      let n = count |> Int32.Parse
+      if n < 1 then
+        failwith "Invalid stream count (minimum is 1)"
+      rest |> parseMore {o with Subcommand = Some(Chunk(n))}
     | [] ->
       if o.WikiId.IsNone then
         cp "\frNo wikidump specified\f0 (Missing \fo-wiki\f0 argument. Use \fowikidata list\f0 to find valid values)"
@@ -89,7 +122,7 @@ let run args =
       None
   let oo = args |> parseMore {
     WikiId = None
-    StreamCount = 1000
+    Subcommand = None
   }
   match oo with
   | Some(o) ->
