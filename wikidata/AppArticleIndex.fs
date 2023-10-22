@@ -20,6 +20,7 @@ type private ArtIdxSubcommand =
 type private ArtIdxOptions = {
   WikiId: WikiDumpId option
   Subcommand: ArtIdxSubcommand option
+  Repeat: int
 }
 
 type WikiContext = {
@@ -139,7 +140,20 @@ let private runArtIdx o =
       cp "\frError: expecting one of\f0: \fo-n\f0, \fo-N\f0, \fo-chunk\f0"
       1
     | Some(Update(streamCount)) ->
-      runArtIdxUpdate context streamCount
+      if o.Repeat > 1 then
+        cp $"Repeating \fb{o.Repeat}\f0 times."
+        cp $"Press \frCTRL-C\f0 to abort after the current repetition."
+      let status = 
+        seq { 1 .. o.Repeat}
+        |> Seq.takeWhile (fun i -> canceled() |> not)
+        |> Seq.map (fun i -> runArtIdxUpdate context streamCount)
+        |> Seq.last
+      if o.Repeat > 1 then
+        if canceled() then
+          cp $"\foCanceled\f0 before completion (intermediate repetitions saved)."
+        else
+          cp $"All repetions \fgcompleted\f0 (no CTRL-C detected)."
+      status
     | Some(Chunk(streamCount)) ->
       runArtIdxChunk context streamCount
 
@@ -171,6 +185,8 @@ let run args =
       if n < 1 then
         failwith "Invalid stream count (minimum is 1)"
       rest |> parseMore {o with Subcommand = Some(Chunk(n))}
+    | "-repeat" :: count :: rest ->
+      rest |> parseMore {o with Repeat = count |> Int32.Parse}
     | [] ->
       if o.WikiId.IsNone then
         cp "\frNo wikidump specified\f0 (Missing \fo-wiki\f0 argument. Use \fowikidata list\f0 to find valid values)"
@@ -183,6 +199,7 @@ let run args =
   let oo = args |> parseMore {
     WikiId = None
     Subcommand = None
+    Repeat = 1
   }
   match oo with
   | Some(o) ->
