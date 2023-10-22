@@ -27,6 +27,37 @@ type WikiContext = {
   SubIndex: SubstreamIndex
 }
 
+type private SliceGroupState = {
+  Accu: ArticleIndexSlice list
+  AccuCount: int
+  Result: ArticleIndexSlice list list
+}
+
+let private groupSlices streamcount slices =
+  let slicegroupfolder state (slice: ArticleIndexSlice) =
+    let slicelength = slice.EndIndex - slice.StartIndex + 1
+    let totalcount = slicelength + state.AccuCount
+    if totalcount <= streamcount || state.AccuCount = 0 then
+      // accu list is empty or has space to grow with the current slice
+      let nextAccu = slice :: state.Accu
+      {state with Accu = nextAccu; AccuCount = totalcount}
+    else
+      // accu list is not empty and would grow too large if further extended
+      let group = state.Accu |> List.rev
+      let nextResult = group :: state.Result
+      {state with Accu = [ slice ]; AccuCount = slicelength; Result = nextResult}
+  let folded =
+    slices |> List.fold slicegroupfolder {
+      Accu = []
+      AccuCount = 0
+      Result = []
+    }
+  if folded.Accu |> List.isEmpty then
+    folded.Result |> List.rev
+  else
+    let group = folded.Accu |> List.rev
+    group :: folded.Result |> List.rev
+
 let private runArtIdxChunk context streamCount =
   let dump = context.Dump
   let slices = dump.ArticleIndexSlices() |> Seq.sortBy (fun s -> s.StartIndex) |> Seq.toList
@@ -34,26 +65,6 @@ let private runArtIdxChunk context streamCount =
     if slice1.EndIndex + 1 <> slice2.StartIndex then
       cpx $"\frError!\f0 Malformed article index. Expecting slices \fc{slice1.StartIndex}\f0-\fc{slice1.EndIndex}\f0"
       cp $" and \fc{slice2.StartIndex}\f0-\fc{slice2.EndIndex}\f0 to be contiguous"
-  let rec groupSlices result accu accucount (slices: ArticleIndexSlice list) =
-    match slices with
-    | slice :: rest ->
-      let slicelength = slice.EndIndex - slice.StartIndex + 1
-      let totalcount = slicelength + accucount
-      if totalcount <= streamCount || accucount = 0 then
-        // accu list is empty or has space to grow with the current slice
-        let nextAccu = slice :: accu
-        rest |> groupSlices result nextAccu totalcount
-      else
-        // accu list is not empty and would grow too large if further extended
-        let group = accu |> List.rev
-        let nextResult = group :: result
-        rest |> groupSlices nextResult [ slice ] slicelength
-    | [] ->
-      if accu |> List.isEmpty then
-        result |> List.rev
-      else
-        let group = accu |> List.rev
-        group :: result |> List.rev
   match slices.Length with
   | 0 ->
     cp "\foThe article index is empty. No chunks to merge ...\f0"
@@ -62,7 +73,7 @@ let private runArtIdxChunk context streamCount =
     cp "\foThe article index has only one entry. No chunks to merge ...\f0"
     0
   | _ ->
-    let groupedSlices = slices |> groupSlices [] [] 0
+    let groupedSlices = slices |> groupSlices streamCount
     cp "\foDBG\f0:"
     for slicelist in groupedSlices do
       cpx "["
