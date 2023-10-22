@@ -97,9 +97,15 @@ public class ArticleIndexRowBuffer: XsvBuffer
     var buffer = new ArticleIndexRowBuffer(reader.Header);
     foreach(var textrow in reader.ReadRecords())
     {
-      buffer.Attach(textrow);
+      // [[A bit of a design blooper, the intended behaviour of buffer.Attach is not implemented]]
+      // buffer.Attach(textrow);
+      // Instead: copy fields one by one
+      for(var i = 0; i < textrow.Count; i++)
+      {
+        buffer[i] = textrow[i];
+      }
       yield return buffer.GetRow();
-      buffer.Detach();
+      // buffer.Detach();
     }
   }
 

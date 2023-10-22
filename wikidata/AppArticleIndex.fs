@@ -74,13 +74,17 @@ let private runArtIdxChunk context streamCount =
     0
   | _ ->
     let groupedSlices = slices |> groupSlices streamCount
-    cp "\foDBG\f0:"
     for slicelist in groupedSlices do
       cpx "["
       for slice in slicelist do
         cpx $" \fc{slice.StartIndex}\f0-\fc{slice.EndIndex}\f0"
       cp " ]"
-    failwith "NYI - '-chunk'"
+      if slicelist.Length < 2 then
+        cp "   \fkNo merge required\f0."
+      else
+        cpx $"   \fyMerging\f0 ...   "
+        let combined = dump.MergeArticleIndexSlices(slicelist)
+        cp $"\r   Merged to \fg{combined.FileName |> Path.GetFileName}\f0"
     0
 
 let private runArtIdxUpdate context streamCount =

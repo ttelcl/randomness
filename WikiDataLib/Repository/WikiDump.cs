@@ -138,6 +138,56 @@ public class WikiDump
   }
 
   /// <summary>
+  /// Merge article index slices
+  /// </summary>
+  /// <param name="slices">
+  /// The slices to merge. Must be sorted and contiguous
+  /// </param>
+  /// <returns>
+  /// The descriptor for the new merged slice
+  /// </returns>
+  public ArticleIndexSlice MergeArticleIndexSlices(IEnumerable<ArticleIndexSlice> slices)
+  {
+    var slicelist = slices.ToList();
+    if(slicelist.Count > 1) // else it would be a NOP
+    {
+      for(var i = 1; i < slicelist.Count; i++)
+      {
+        if(slicelist[i-1].EndIndex + 1 != slicelist[i].StartIndex)
+        {
+          throw new ArgumentException(
+            $"Expecting contiguous article index slices, but [..{slicelist[i-1].EndIndex}] does not touch [{slicelist[i].StartIndex}...]");
+        }
+      }
+      var aidx = new ArticleIndex();
+      foreach(var slice in slicelist)
+      {
+        // Console.WriteLine($"[[{slice.FileName}]]");
+        aidx.Import(slice.FileName);
+      }
+      var sample = slicelist[0];
+      var combined = new ArticleIndexSlice(
+        Path.GetDirectoryName(sample.FileName)!,
+        sample.WikiId,
+        slicelist[0].StartIndex,
+        slicelist[^1].EndIndex);
+      var tmpName = combined.FileName + ".tmp";
+      aidx.Save(tmpName);
+      // now patch up the file names
+      foreach(var slice in slicelist)
+      {
+        File.Move(slice.FileName, slice.FileName + ".bak", true);
+      }
+      File.Move(tmpName, combined.FileName, true);
+      return combined;
+    }
+    else
+    {
+      return slicelist[0];
+    }
+  }
+
+  /// <summary>
   /// Synchronize the state of this instance with the disk state.
   /// Currently this is a no-op
   /// </summary>
