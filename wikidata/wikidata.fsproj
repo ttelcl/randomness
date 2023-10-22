@@ -23,6 +23,8 @@
     <Compile Include="AppExtract.fs" />
     <Compile Include="AppArticleIndex.fs" />
     <Compile Include="AppDump.fs" />
+    <Compile Include="AppStudyInit.fs" />
+    <Compile Include="AppStudyExtract.fs" />
     <Compile Include="Program.fs" />
     <None Include="README.md" />
   </ItemGroup>

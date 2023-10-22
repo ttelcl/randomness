@@ -40,6 +40,17 @@ let rec run arglist =
     rest |> AppArticleIndex.run
   | "dump" :: rest ->
     rest |> AppDump.run
+  | "study" :: "init" :: rest ->
+    rest |> AppStudyInit.run
+  | "study" :: "extract" :: rest ->
+    rest |> AppStudyExtract.run
+  | "study" :: x :: _ ->
+    cp $"\frUnknown subcommand\fo study \fy{x}\f0!"
+    usage "study"
+    1
+  | "study" :: [] ->
+    usage "study"
+    1
   | x :: _ ->
     cp $"\frUnrecognized argument\f0: \fo{x}\f0."
     usage "short"

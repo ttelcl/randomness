@@ -61,6 +61,14 @@ let usage detail =
     cp "   \fg-chunk\f0 <\fccount\f0>\fx\fx      Merge partial indices in chunks of \fccount\f0 streams. Mutually exclusive with \fg-n\f0 and \fg-N\f0"
     cp "   \fg-repeat\f0 <\fccount\f0>\fx\fx     Repeat the \fg-n\f0 (or \fg-N\f0) command \fccount\f0 times."
     cp ""
+
+  if showSynopsis "study" then
+    cp "\fowikidata study init\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>"
+    cp "   Initialize a new study in the current directory. The Wiki ID can act as default for other commands."
+    cp "\fowikidata study export\f0 \fg-page\f0 <\fcpage-id\f0> [\fg-xml\f0] [\fg-text\f0] [\fg-plain\f0]"
+    cp "   Locate an article in the current wiki's article index and export it to one or more file formats"
+  if showDescription "study" then
+    cp ""
   
   if showSynopsis "extract" then
     cp "\fowikidata extract\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> [\fg-raw\f0] [\fg-nowrap\f0] {\fg-pos\f0 <\fcstart\f0>|\fg-i\f0 <\fcindex\f0>}"
