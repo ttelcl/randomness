@@ -186,6 +186,19 @@ public class WikiRepo
   }
 
   /// <summary>
+  /// Return a WikiDump instance, returning null if the folders are missing
+  /// </summary>
+  public WikiDump? FindDumpFolder(WikiDumpId wdi)
+  {
+    var wiki = FindWiki(wdi.WikiTag);
+    if(wiki == null)
+    {
+      return null;
+    }
+    return wiki.FindDump(wdi.DumpTag);
+  }
+
+  /// <summary>
   /// Enumerate the files (of supported types) pending import
   /// </summary>
   public IEnumerable<string> PendingFiles()

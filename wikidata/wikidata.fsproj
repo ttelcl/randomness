@@ -16,6 +16,7 @@
     <Compile Include="PrintUtils.fs" />
     <Compile Include="ExceptionTool.fs" />
     <Compile Include="Usage.fs" />
+    <Compile Include="WikiUtils.fs" />
     <Compile Include="AppConfig.fs" />
     <Compile Include="AppWikiList.fs" />
     <Compile Include="AppImport.fs" />

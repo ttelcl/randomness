@@ -126,7 +126,7 @@ let private runArtIdx o =
   let wikiId =
     match o.WikiId with
     | Some(wid) -> wid
-    | None -> failwith "No WikiDump selected"
+    | None -> o.WikiId |> WikiUtils.resolveWiki
   let dump = wikiId |> repo.GetDumpFolder
   if dump.HasStreamIndex |> not then
     failwith $"'{wikiId}' has no stream index yet (run 'wikidata index -wiki {wikiId}' to create it)"
@@ -188,10 +188,6 @@ let run args =
     | "-repeat" :: count :: rest ->
       rest |> parseMore {o with Repeat = count |> Int32.Parse}
     | [] ->
-      if o.WikiId.IsNone then
-        cp "\frNo wikidump specified\f0 (Missing \fo-wiki\f0 argument. Use \fowikidata list\f0 to find valid values)"
-        None
-      else
         Some(o)
     | x :: _ ->
       cp $"\frError: unrecognized argument \f0'\fo{x}\f0'"

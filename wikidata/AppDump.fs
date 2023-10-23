@@ -196,13 +196,13 @@ let run args =
     | "-index" :: rest ->
       rest |> parseMore {o with SaveIndex = true}
     | [] ->
-      if o.WikiId.IsNone then
-        cp "\frNo wikidump specified\f0 (Missing \fo-wiki\f0 argument. Use \fowikidata list\f0 to find valid values)"
-        None
-      else if o.Sections |> List.isEmpty then
+      if o.Sections |> List.isEmpty then
         cp "\frNo offsets (\fo-pos\fr) or indices (\fo-i\fr) specified\f0."
         None
-      else
+      elif o.WikiId.IsNone then
+        let wikiId = o.WikiId |> WikiUtils.resolveWiki
+        Some({o with Sections = o.Sections |> List.rev; WikiId = Some(wikiId)})
+      else 
         Some({o with Sections = o.Sections |> List.rev})
     | x :: _ ->
       cp $"\frUnrecognized argument\f0: \fo{x}\f0"
