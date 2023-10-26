@@ -100,4 +100,11 @@ public class ArticleIndexSlice
   /// </summary>
   public int EndIndex { get; init; }
 
+  /// <summary>
+  /// Import this slice into the specified <see cref="ArticleIndex"/>
+  /// </summary>
+  public void ImportInto(ArticleIndex aidx)
+  {
+    aidx.Import(this);
+  }
 }

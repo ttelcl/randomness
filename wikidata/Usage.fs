@@ -1,6 +1,8 @@
 ﻿// (c) 2023  ttelcl / ttelcl
 module Usage
 
+open WikiDataLib.Repository
+
 open CommonTools
 open ColorPrint
 
@@ -87,5 +89,9 @@ let usage detail =
   cp "\fg-v               \f0Verbose mode"
   cp "\fg-h               \f0Show more detailed help"
   
-
+  let study = Study.FromFile()
+  if study = null then
+    cp "\fyDefault wiki\f0: \fonot set\f0 (use \fowikidata study init\f0 to change)"
+  else
+    cp $"\fyDefault wiki\f0: \fg{study.WikiId}\f0 (use \fowikidata study init\f0 to change)"
 

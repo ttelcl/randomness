@@ -26,10 +26,7 @@ type private ExtractOptions = {
 
 let private runExtract o =
   let repo = new WikiRepo()
-  let wikiId =
-    match o.WikiId with
-    | Some(wid) -> wid
-    | None -> failwith "No WikiDump selected"
+  let wikiId = o.WikiId |> WikiUtils.resolveWiki
   let dump = wikiId |> repo.GetDumpFolder
   if dump.HasStreamIndex |> not then
     failwith $"'{wikiId}' has no stream index yet (run 'wikidata index -wiki {wikiId}' to create it)"

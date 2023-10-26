@@ -61,7 +61,8 @@ let private groupSlices streamcount slices =
 
 let private runArtIdxChunk context streamCount =
   let dump = context.Dump
-  let slices = dump.ArticleIndexSlices() |> Seq.sortBy (fun s -> s.StartIndex) |> Seq.toList
+  let articleDb = dump.LoadArticleDb()
+  let slices = articleDb.Slices |> Seq.toList
   for (slice1, slice2) in slices |> List.pairwise do // validate
     if slice1.EndIndex + 1 <> slice2.StartIndex then
       cpx $"\frError!\f0 Malformed article index. Expecting slices \fc{slice1.StartIndex}\f0-\fc{slice1.EndIndex}\f0"
@@ -84,7 +85,7 @@ let private runArtIdxChunk context streamCount =
         cp "   \fkNo merge required\f0."
       else
         cpx $"   \fyMerging\f0 ...   "
-        let combined = dump.MergeArticleIndexSlices(slicelist)
+        let combined = WikiDump.MergeArticleIndexSlices(slicelist)
         cp $"\r   Merged to \fg{combined.FileName |> Path.GetFileName}\f0"
     0
 

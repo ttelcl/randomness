@@ -42,8 +42,8 @@ let rec run arglist =
     rest |> AppDump.run
   | "study" :: "init" :: rest ->
     rest |> AppStudyInit.run
-  | "study" :: "extract" :: rest ->
-    rest |> AppStudyExtract.run
+  | "study" :: "export" :: rest ->
+    rest |> AppStudyExport.run
   | "study" :: x :: _ ->
     cp $"\frUnknown subcommand\fo study \fy{x}\f0!"
     usage "study"

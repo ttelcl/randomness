@@ -121,20 +121,29 @@ public class WikiDump
   }
 
   /// <summary>
-  /// Enumerate the partial article index slices found in the article index folder
+  /// Load the article slice db
   /// </summary>
-  /// <returns></returns>
-  public IEnumerable<ArticleIndexSlice> ArticleIndexSlices()
+  public ArticleDb LoadArticleDb()
   {
+    return new ArticleDb(this);
+  }
+
+  /// <summary>
+  /// Return a list of the partial article index slices found in the article index folder
+  /// </summary>
+  internal List<ArticleIndexSlice> ArticleIndexSlices()
+  {
+    var slices = new List<ArticleIndexSlice>();
     var di = new DirectoryInfo(ArticleIndexFolderName);
     foreach(var fi in di.EnumerateFiles($"{Id}.i-*.partidx.csv"))
     {
       var parts = fi.Name.Split('.');
       if(parts.Length == 4)
       {
-        yield return ArticleIndexSlice.ParseFileName(fi.FullName);
+        slices.Add(ArticleIndexSlice.ParseFileName(fi.FullName));
       }
     }
+    return slices.OrderBy(slice => slice.StartIndex).ToList();
   }
 
   /// <summary>
@@ -146,7 +155,7 @@ public class WikiDump
   /// <returns>
   /// The descriptor for the new merged slice
   /// </returns>
-  public ArticleIndexSlice MergeArticleIndexSlices(IEnumerable<ArticleIndexSlice> slices)
+  public static ArticleIndexSlice MergeArticleIndexSlices(IEnumerable<ArticleIndexSlice> slices)
   {
     var slicelist = slices.ToList();
     if(slicelist.Count > 1) // else it would be a NOP

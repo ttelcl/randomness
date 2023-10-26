@@ -71,6 +71,15 @@ public class ArticleIndex
   }
 
   /// <summary>
+  /// Add the content of the given <see cref="ArticleIndexSlice"/> to this
+  /// Article Index
+  /// </summary>
+  public void Import(ArticleIndexSlice slice)
+  {
+    Import(slice.FileName);
+  }
+
+  /// <summary>
   /// Save this article index to a CSV file
   /// </summary>
   public void Save(string articleIndexFile)
