@@ -91,6 +91,11 @@ public class WikiXmlPage
   public XPathNavigator PageNavigator { get => _pageNavigator.Clone(); }
 
   /// <summary>
+  /// Return the content of the revision's text
+  /// </summary>
+  public string Content { get => RequiredString("revision/text"); }
+
+  /// <summary>
   /// Return a new ArticleIndexRow for this page, if this page contains
   /// a plain article.
   /// </summary>

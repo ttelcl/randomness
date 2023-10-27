@@ -32,6 +32,16 @@ public class ArticleIndex
   }
 
   /// <summary>
+  /// Create a new ArticleIndex and load it with one slice
+  /// </summary>
+  public static ArticleIndex FromSlice(ArticleIndexSlice slice)
+  {
+    var aidx = new ArticleIndex();
+    aidx.Import(slice);
+    return aidx;
+  }
+
+  /// <summary>
   /// Insert or replace an article index row
   /// </summary>
   public void Put(ArticleIndexRow row)
@@ -42,7 +52,7 @@ public class ArticleIndex
   /// <summary>
   /// Try to retrieve a row by page ID, returning null if not found
   /// </summary>
-  public ArticleIndexRow? FindRowById(int pageId)
+  public ArticleIndexRow? FindRowById(long pageId)
   {
     return _rowsById.TryGetValue(pageId, out var row) ? row : null; 
   }

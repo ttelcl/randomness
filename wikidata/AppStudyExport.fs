@@ -11,6 +11,7 @@ open WikiDataLib.Repository
 
 open ColorPrint
 open CommonTools
+open AppArticleIndex
 
 type private SearchCommand =
   | ByPage of int64
@@ -23,6 +24,59 @@ type private StudyExportOptions = {
   WriteWikiText: bool
   WritePlainText: bool
 }
+
+let private searchIndexPage pageId (index: ArticleIndex) =
+  pageId |> index.FindRowById |> Option.ofObj
+
+let private searchDbPage pageId (articleDb: ArticleDb) =
+  articleDb.Slices
+  |> Seq.map(ArticleIndex.FromSlice)
+  |> Seq.choose (searchIndexPage pageId)
+  |> Seq.tryHead
+
+let private searchDb command articleDb =
+  match command with
+  | SearchCommand.ByPage(pageId) ->
+    articleDb |> searchDbPage pageId |> Option.toList
+
+let private exportPage context o (row: ArticleIndexRow) =
+  let dump = context.Dump
+  let subindex = context.SubIndex
+  use main = dump.OpenMainDump()
+  let substream = subindex.OpenConcatenation(main, [row.StreamId], true)
+  let pages =
+    substream
+    |> WikiXml.ReadPageFragments
+    |> Seq.map (fun xpd -> new WikiXmlPage(xpd))
+    |> Seq.filter (fun wxp -> wxp.Id = row.PageId)
+    |> Seq.toArray
+  if pages.Length = 0 then
+    cp $"\frIndex Error\f0: \fopage {row.PageId}\fy not found in stream \fo{row.StreamId}\f0."
+    1
+  elif pages.Length > 1 then
+    cp $"\frIndex Error\f0: \fopage {row.PageId}\fy found multiple times in stream \fo{row.StreamId}\f0???"
+    1
+  else
+    let page = pages[0]
+    let prefix = $"{dump.Id.WikiTag}.p%08d{row.PageId}"
+    if o.WriteXml then
+      let xmlName = prefix + ".xml"
+      cp $"Saving \fg{xmlName}\f0."
+      let xws = new XmlWriterSettings()
+      xws.Indent <- true
+      use xw = XmlWriter.Create(xmlName, xws)
+      xw.WriteStartDocument()
+      let nav = page.Doc.CreateNavigator()
+      nav.WriteSubtree(xw)
+    if o.WriteWikiText then
+      let wtxName = prefix + ".wiki.txt"
+      let wtx = page.Content
+      cp $"Saving \fg{wtxName}\f0."
+      File.WriteAllText(wtxName, wtx)
+    if o.WritePlainText then
+      let ptxName = prefix + ".plain.txt"
+      cp $"\frNYI\f0 PlainText writing / \fy{ptxName}\f0."
+    0
 
 let private runExport o =
   let command =
@@ -46,7 +100,26 @@ let private runExport o =
       cp $"\foWarning\f0: the article index is incomplete (\fb{indexStreamCount}\f0 of \fb{subindex.Count-2}\f0, \fc%.2f{percentage} %%\f0)"
     else
       cp $"The article index is Complete (\fb{indexStreamCount}\f0 of \fb{subindex.Count-2}\f0, \fg%.2f{percentage} %%\f0)"
-    0
+    let results = articleDb |> searchDb command
+    if results.Length = 0 then
+      cp "\foNo matching records found\f0."
+      0
+    else
+      cp $"Found \fb{results.Length}\f0 matching index records."
+      for result in results do
+        cp $"  Page \fg%-8d{result.PageId}\f0 in stream \fb%-8d{result.StreamId}\f0 \fy%-30s{result.Title}\f0 (\fb{result.ByteCount}\f0 bytes). "
+      if o.WritePlainText || o.WriteWikiText || o.WriteXml then
+        if results.Length > 1 then
+          cp "\foAmbiguous search result\f0. Skipping file export."
+          0
+        else
+          let context = {
+            Dump = dump
+            SubIndex = subindex
+          }
+          results[0] |> exportPage context o
+      else
+        0
 
 let run args =
   let rec parseMore o args =
