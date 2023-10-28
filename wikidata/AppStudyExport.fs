@@ -12,6 +12,7 @@ open WikiDataLib.Repository
 open ColorPrint
 open CommonTools
 open AppArticleIndex
+open WikiDataLib.WikiContent
 
 type private SearchCommand =
   | ByPage of int64
@@ -39,6 +40,14 @@ let private searchDb command articleDb =
   | SearchCommand.ByPage(pageId) ->
     articleDb |> searchDbPage pageId |> Option.toList
 
+let private exportPagePlain prefix (page: WikiXmlPage) =
+  let ptxName = prefix + ".plain.txt"
+  cp "Parsing ..."
+  let model = new WikiModel(page.Content)
+  cp $"Saving \fy{ptxName}\f0."
+  File.WriteAllLines(ptxName, model.PlaintextLines(true))
+  ()
+
 let private exportPage context o (row: ArticleIndexRow) =
   let dump = context.Dump
   let subindex = context.SubIndex
@@ -58,7 +67,8 @@ let private exportPage context o (row: ArticleIndexRow) =
     1
   else
     let page = pages[0]
-    let prefix = $"{dump.Id.WikiTag}.p%08d{row.PageId}"
+    let slug = row.MakeSlug()
+    let prefix = $"{dump.Id.WikiTag}.p%08d{row.PageId}.{slug}"
     if o.WriteXml then
       let xmlName = prefix + ".xml"
       cp $"Saving \fg{xmlName}\f0."
@@ -74,8 +84,7 @@ let private exportPage context o (row: ArticleIndexRow) =
       cp $"Saving \fg{wtxName}\f0."
       File.WriteAllText(wtxName, wtx)
     if o.WritePlainText then
-      let ptxName = prefix + ".plain.txt"
-      cp $"\frNYI\f0 PlainText writing / \fy{ptxName}\f0."
+      page |> exportPagePlain prefix
     0
 
 let private runExport o =
