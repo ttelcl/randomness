@@ -15,7 +15,7 @@ using MwParserFromScratch.Nodes;
 namespace WikiDataLib.WikiContent;
 
 /// <summary>
-/// Description of WikiModel
+/// Wraps a wiki content AST
 /// </summary>
 public class WikiModel
 {
@@ -23,12 +23,13 @@ public class WikiModel
   /// Create a new WikiModel
   /// </summary>
   public WikiModel(
+    WikiModelParseSettings settings,
     string wikiSourceText)
   {
     WikiSourceText = wikiSourceText;
+    Settings = settings;
     var parser = new WikitextParser();
-    var parserOptions = new WikitextParserOptions() {
-    };
+    var parserOptions = settings.CreateParserOptions();
     parser.Options = parserOptions;
     Model = parser.Parse(wikiSourceText);
   }
@@ -44,6 +45,11 @@ public class WikiModel
   public Wikitext Model { get; }
 
   /// <summary>
+  /// Settings used in parsing and postprocessing
+  /// </summary>
+  public WikiModelParseSettings Settings { get; }
+
+  /// <summary>
   /// Return the plaintext as an enumeration of lines. This method has a few tweaks
   /// on top of the underlying implementation
   /// </summary>
@@ -52,28 +58,38 @@ public class WikiModel
   /// </param>
   public IEnumerable<string> PlaintextLines(bool stripTables)
   {
+    // TODO: Category links
     var lines = Model.ToPlainText()
       .Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None) ?? Array.Empty<string>();
-    var drop = false;
+    var tableLevel = 0;
     var wasEmpty = true;
     foreach(var line in lines)
     {
       if(stripTables && line.StartsWith("{|"))
       {
-        drop = true;
+        tableLevel++;
       }
-      if(!drop)
+      if(tableLevel == 0)
       {
-        var isEmpty = String.IsNullOrEmpty(line);
+        var line2 = line;
+        var parts = line2.Split(':', 2);
+        if(parts.Length > 1 
+          && parts[1].Length > 0
+          && !Char.IsWhiteSpace(parts[1][0])
+          && Settings.CategoryAliases.Contains(parts[0]))
+        {
+          line2 = String.Empty;
+        }
+        var isEmpty = String.IsNullOrEmpty(line2);
         if(!isEmpty || !wasEmpty) // avoid multiple empty lines
         {
-          yield return line;
+          yield return line2;
         }
         wasEmpty = isEmpty;
       }
       if(line.StartsWith("|}"))
       {
-        drop = false;
+        tableLevel--;
       }
     }
   }

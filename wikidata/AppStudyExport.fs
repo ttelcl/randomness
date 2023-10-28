@@ -8,11 +8,11 @@ open System.Xml
 open XsvLib
 
 open WikiDataLib.Repository
+open WikiDataLib.WikiContent
 
 open ColorPrint
 open CommonTools
 open AppArticleIndex
-open WikiDataLib.WikiContent
 
 type private SearchCommand =
   | ByPage of int64
@@ -40,10 +40,12 @@ let private searchDb command articleDb =
   | SearchCommand.ByPage(pageId) ->
     articleDb |> searchDbPage pageId |> Option.toList
 
-let private exportPagePlain prefix (page: WikiXmlPage) =
+let private exportPagePlain context prefix (page: WikiXmlPage) =
   let ptxName = prefix + ".plain.txt"
   cp "Parsing ..."
-  let model = new WikiModel(page.Content)
+  let wiki = context.WikiRoot
+  let settings = wiki.ParseSettings
+  let model = new WikiModel(settings, page.Content)
   cp $"Saving \fy{ptxName}\f0."
   File.WriteAllLines(ptxName, model.PlaintextLines(true))
   ()
@@ -84,7 +86,7 @@ let private exportPage context o (row: ArticleIndexRow) =
       cp $"Saving \fg{wtxName}\f0."
       File.WriteAllText(wtxName, wtx)
     if o.WritePlainText then
-      page |> exportPagePlain prefix
+      page |> exportPagePlain context prefix
     0
 
 let private runExport o =
@@ -125,6 +127,7 @@ let private runExport o =
           let context = {
             Dump = dump
             SubIndex = subindex
+            WikiRoot = repo.FindWiki(dump.Id.WikiTag)
           }
           results[0] |> exportPage context o
       else

@@ -26,6 +26,7 @@ type private ArtIdxOptions = {
 type WikiContext = {
   Dump: WikiDump
   SubIndex: SubstreamIndex
+  WikiRoot: Wiki
 }
 
 type private SliceGroupState = {
@@ -129,12 +130,14 @@ let private runArtIdx o =
     | Some(wid) -> wid
     | None -> o.WikiId |> WikiUtils.resolveWiki
   let dump = wikiId |> repo.GetDumpFolder
+  let wikiroot = repo.FindWiki(wikiId.WikiTag)
   if dump.HasStreamIndex |> not then
     failwith $"'{wikiId}' has no stream index yet (run 'wikidata index -wiki {wikiId}' to create it)"
   let subindex = dump.LoadIndex()
   let context = {
     SubIndex = subindex
     Dump = dump
+    WikiRoot = wikiroot
   }
   match o.Subcommand with
     | None ->
