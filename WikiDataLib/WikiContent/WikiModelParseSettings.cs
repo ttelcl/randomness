@@ -35,6 +35,7 @@ public class WikiModelParseSettings
     CategoryAliases = new HashSet<string>(categoryAliases ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
     RemoveAtEnd = new HashSet<string>(removeAtEnd ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
     Alphabet = String.IsNullOrEmpty(alphabet) ? "abcdefghijklmnopqrstuvwxyz" : alphabet;
+    AlphabetSet = new HashSet<char>(Alphabet);
   }
 
   /// <summary>
@@ -79,5 +80,11 @@ public class WikiModelParseSettings
     wpo.ImageNamespaceNames = insSet;
     return wpo;
   }
+
+  /// <summary>
+  /// Alphabet, exposed as a set of characters
+  /// </summary>
+  [JsonIgnore]
+  public ISet<char> AlphabetSet { get; }
 
 }

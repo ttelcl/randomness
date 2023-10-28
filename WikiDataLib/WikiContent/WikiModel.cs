@@ -73,7 +73,7 @@ public class WikiModel
       {
         var line2 = line;
         var parts = line2.Split(':', 2);
-        if(parts.Length > 1 
+        if(parts.Length > 1
           && parts[1].Length > 0
           && !Char.IsWhiteSpace(parts[1][0])
           && Settings.CategoryAliases.Contains(parts[0]))
@@ -92,5 +92,93 @@ public class WikiModel
         tableLevel--;
       }
     }
+  }
+
+  private readonly static string[] __dropFromStartOfWords = new string[] {
+    "\"",
+    "'",
+    "(",
+  };
+
+  private readonly static string[] __dropFromEndOfWords = new string[] {
+    "\"",
+    "'",
+    ")",
+    ",",
+    ".",
+    ";",
+    "!",
+    "?",
+  };
+
+  /// <summary>
+  /// Enumerate words in <paramref name="line"/> that meet the requirements set forth
+  /// in <see cref="Settings"/>
+  /// </summary>
+  public IEnumerable<string> WordsFromLine(string line)
+  {
+    var words = line.Split();
+    var alphabetSet = Settings.AlphabetSet;
+
+    foreach(var word0 in words)
+    {
+      // This is not foolproof, but gets the job in most cases.
+      var word = word0;
+      foreach(var dropPrefix in __dropFromStartOfWords)
+      {
+        if(word.StartsWith(dropPrefix))
+        {
+          word = word[dropPrefix.Length..];
+        }
+      }
+      foreach(var dropSuffix in __dropFromEndOfWords)
+      {
+        if(word.EndsWith(dropSuffix))
+        {
+          word = word[..^dropSuffix.Length];
+        }
+      }
+      foreach(var dropSuffix in Settings.RemoveAtEnd)
+      {
+        if(word.EndsWith(dropSuffix))
+        {
+          word = word[..^dropSuffix.Length];
+        }
+      }
+      if(word.Length > 0 && word.All(ch => alphabetSet.Contains(ch)))
+      {
+        yield return word;
+      }
+    }
+  }
+
+  /// <summary>
+  /// Enumerate words in the full plaintext that meet the requirements set forth
+  /// in <see cref="Settings"/>
+  /// </summary>
+  public IEnumerable<string> EnumerateWords()
+  {
+    return PlaintextLines(true).SelectMany(line => WordsFromLine(line));
+  }
+
+  /// <summary>
+  /// Count all words in the plaintext that meet the requirements set forth
+  /// in <see cref="Settings"/> and return the word count for each distinct word.
+  /// </summary>
+  public Dictionary<string, int> GatherWordCounts()
+  {
+    var map = new Dictionary<string, int>();
+    foreach(var word in EnumerateWords())
+    {
+      if(!map.TryGetValue(word, out var count))
+      {
+        map[word] = 1;
+      }
+      else
+      {
+        map[word] = count + 1;
+      }
+    }
+    return map;
   }
 }

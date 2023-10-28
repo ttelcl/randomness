@@ -24,6 +24,7 @@ type private StudyExportOptions = {
   WriteXml: bool
   WriteWikiText: bool
   WritePlainText: bool
+  WriteWords: bool
 }
 
 let private searchIndexPage pageId (index: ArticleIndex) =
@@ -40,14 +41,31 @@ let private searchDb command articleDb =
   | SearchCommand.ByPage(pageId) ->
     articleDb |> searchDbPage pageId |> Option.toList
 
-let private exportPagePlain context prefix (page: WikiXmlPage) =
-  let ptxName = prefix + ".plain.txt"
-  cp "Parsing ..."
+let private exportPagePlain o context prefix (page: WikiXmlPage) =
   let wiki = context.WikiRoot
   let settings = wiki.ParseSettings
   let model = new WikiModel(settings, page.Content)
-  cp $"Saving \fy{ptxName}\f0."
-  File.WriteAllLines(ptxName, model.PlaintextLines(true))
+  if o.WritePlainText then
+    let ptxName = prefix + ".plain.txt"
+    cp $"Saving \fg{ptxName}\f0."
+    File.WriteAllLines(ptxName, model.PlaintextLines(true))
+  if o.WriteWords then
+    //let wordsDbgName = prefix + ".words-dbg.txt"
+    //cp $"Saving \fo{wordsDbgName}\f0."
+    //File.WriteAllLines(wordsDbgName, model.EnumerateWords())
+    let wordsName = prefix + ".words.csv"
+    cp $"Saving \fg{wordsName}\f0."
+    let wordMap = model.GatherWordCounts()
+    use w = File.CreateText(wordsName)
+    w.WriteLine("word,count")
+    let wordCounts =
+      wordMap
+      |> Seq.map(fun kvp -> (kvp.Key, kvp.Value))
+      |> Seq.sortByDescending (fun (k,v) -> v)
+      |> Seq.toArray
+    for (k,v) in wordCounts do
+      w.WriteLine($"{k},{v}")
+    cp $"Word count: total \fb{wordCounts |> Seq.sumBy (fun (_,v) -> v)}\f0, distinct: \fy{wordCounts.Length}\f0 "
   ()
 
 let private exportPage context o (row: ArticleIndexRow) =
@@ -85,8 +103,8 @@ let private exportPage context o (row: ArticleIndexRow) =
       let wtx = page.Content
       cp $"Saving \fg{wtxName}\f0."
       File.WriteAllText(wtxName, wtx)
-    if o.WritePlainText then
-      page |> exportPagePlain context prefix
+    if o.WritePlainText || o.WriteWords then
+      page |> exportPagePlain o context prefix
     0
 
 let private runExport o =
@@ -119,7 +137,7 @@ let private runExport o =
       cp $"Found \fb{results.Length}\f0 matching index records."
       for result in results do
         cp $"  Page \fg%-8d{result.PageId}\f0 in stream \fb%-8d{result.StreamId}\f0 \fy%-30s{result.Title}\f0 (\fb{result.ByteCount}\f0 bytes). "
-      if o.WritePlainText || o.WriteWikiText || o.WriteXml then
+      if o.WritePlainText || o.WriteWikiText || o.WriteXml || o.WriteWords then
         if results.Length > 1 then
           cp "\foAmbiguous search result\f0. Skipping file export."
           0
@@ -151,6 +169,8 @@ let run args =
       rest |> parseMore {o with WriteWikiText = true}
     | "-plain" :: rest ->
       rest |> parseMore {o with WritePlainText = true}
+    | "-words" :: rest ->
+      rest |> parseMore {o with WriteWords = true}
     | "-xml" :: rest ->
       rest |> parseMore {o with WriteXml = true}
     | [] ->
@@ -168,6 +188,7 @@ let run args =
     WriteXml = false
     WriteWikiText = false
     WritePlainText = false
+    WriteWords = false
   }
   match oo with
   | Some(o) ->
