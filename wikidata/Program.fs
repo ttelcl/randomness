@@ -14,10 +14,10 @@ let rec run arglist =
     verbose <- true
     rest |> run
   | "--help" :: _
-  | "-h" :: _
-  | [] ->
+  | "-h" :: _ ->
     usage "all"
     0  // program return status code to the operating system; 0 == "OK"
+  | []
   | "-?" :: _ ->
     usage "short"
     0  // program return status code to the operating system; 0 == "OK"
@@ -32,13 +32,28 @@ let rec run arglist =
     rest |> AppWikiList.run
   | "import" :: rest ->
     rest |> AppImport.run
-  | "index" :: rest ->
-    rest |> AppIndex.run
+  | "streamindex" :: rest ->
+    rest |> AppStreamIndex.run
   | "extract" :: rest ->
     rest |> AppExtract.run
+  | "articleindex" :: rest ->
+    rest |> AppArticleIndex.run
+  | "dump" :: rest ->
+    rest |> AppDump.run
+  | "study" :: "init" :: rest ->
+    rest |> AppStudyInit.run
+  | "study" :: "export" :: rest ->
+    rest |> AppStudyExport.run
+  | "study" :: x :: _ ->
+    cp $"\frUnknown subcommand\fo study \fy{x}\f0!"
+    usage "study"
+    1
+  | "study" :: [] ->
+    usage "study"
+    1
   | x :: _ ->
     cp $"\frUnrecognized argument\f0: \fo{x}\f0."
-    usage "all"
+    usage "short"
     1
 
 [<EntryPoint>]

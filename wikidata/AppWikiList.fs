@@ -40,15 +40,13 @@ let run args =
         let dumpCountColor = if wiki.Dumps.Count > 0 then "\fb" else "\fr"
         cp $"  \fg{wiki.WikiTag}\f0 ({wiki.Folder})  {dumpCountColor}{wiki.Dumps.Count}\f0 dumps."
         for dump in wiki.Dumps do
-          let keyColor = if dump.HasMainFile && dump.HasMainIndexBz2 then "\fy" else "\fo"
+          let keyColor = if dump.HasMainFile && dump.HasStreamIndex then "\fy" else "\fo"
           let mainColor = if dump.HasMainFile then "\fg" else "\fr"
-          let mainIdxRawColor = if dump.HasMainIndexBz2 then "\fg" else "\fr"
-          let mainIdxColor = if dump.HasMainIndex then "\fg" else "\fr"
           let streamIdxColor =
             if dump.HasStreamIndex then
               "\fg"
             else
               "\fr"
-          cp $"      {keyColor}{dump.Id}   {mainColor}master  {mainIdxRawColor}rawindex  {mainIdxColor}index  {streamIdxColor}stream\f0"
+          cp $"      {keyColor}{dump.Id}   {mainColor}master  {streamIdxColor}streamindex\f0"
         
     0

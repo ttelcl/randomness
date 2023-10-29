@@ -16,11 +16,16 @@
     <Compile Include="PrintUtils.fs" />
     <Compile Include="ExceptionTool.fs" />
     <Compile Include="Usage.fs" />
+    <Compile Include="WikiUtils.fs" />
     <Compile Include="AppConfig.fs" />
     <Compile Include="AppWikiList.fs" />
     <Compile Include="AppImport.fs" />
-    <Compile Include="AppIndex.fs" />
+    <Compile Include="AppStreamIndex.fs" />
     <Compile Include="AppExtract.fs" />
+    <Compile Include="AppArticleIndex.fs" />
+    <Compile Include="AppDump.fs" />
+    <Compile Include="AppStudyInit.fs" />
+    <Compile Include="AppStudyExport.fs" />
     <Compile Include="Program.fs" />
     <None Include="README.md" />
   </ItemGroup>

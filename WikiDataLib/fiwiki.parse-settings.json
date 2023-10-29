@@ -1,0 +1,13 @@
+{
+  "image-namespaces": [
+    "Tiedosto",
+    "Kuva"
+  ],
+  "category-aliases": [
+    "Luokka"
+  ],
+  "alphabet": "abcdefghijklmnopqrstuvwxyzäö",
+  "remove-at-end": [
+    ":n"
+  ]
+}

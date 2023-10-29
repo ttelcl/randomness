@@ -18,7 +18,6 @@ type private SectionIndex =
   | ByIndex of int
 
 type private ExtractOptions = {
-  InfoMode: bool
   Raw: bool
   Wrap: bool
   WikiId: WikiDumpId option
@@ -27,10 +26,7 @@ type private ExtractOptions = {
 
 let private runExtract o =
   let repo = new WikiRepo()
-  let wikiId =
-    match o.WikiId with
-    | Some(wid) -> wid
-    | None -> failwith "No WikiDump selected"
+  let wikiId = o.WikiId |> WikiUtils.resolveWiki
   let dump = wikiId |> repo.GetDumpFolder
   if dump.HasStreamIndex |> not then
     failwith $"'{wikiId}' has no stream index yet (run 'wikidata index -wiki {wikiId}' to create it)"
@@ -73,7 +69,7 @@ let private runExtract o =
     elif wrapped && o = lastIndex then
       ")"
     else
-      $"p{o}"
+      $"i{o}"
   let indicesTag = 
     String.Join("-", indices |> Array.map indexText)
       .Replace("(-", "(")
@@ -110,8 +106,9 @@ let run args =
       rest |> parseMore {o with Wrap = true}
     | "-nowrap" :: rest ->
       rest |> parseMore {o with Wrap = false}
-    | "-info" :: rest ->
-      rest |> parseMore {o with InfoMode = true}
+    | "-pos" :: position :: rest
+    | "-off" :: position :: rest
+    | "-offset" :: position :: rest
     | "-s" :: position :: rest ->
       let idx = position |> Int64.Parse |> SectionIndex.ByOffset
       rest |> parseMore {o with Sections = idx :: o.Sections}
@@ -123,7 +120,7 @@ let run args =
         cp "\frNo wikidump specified\f0 (Missing \fo-wiki\f0 argument. Use \fowikidata list\f0 to find valid values)"
         None
       else if o.Sections |> List.isEmpty && o.Wrap |> not then
-        cp "\frNo offsets (\fo-p\fr), indices (\fo-i\fr) or wrap flag (\fo-wrap\fr) specified\f0."
+        cp "\frNo offsets (\fo-pos\fr), indices (\fo-i\fr) or wrap flag (\fo-wrap\fr) specified\f0."
         None
       else
         Some({o with Sections = o.Sections |> List.rev})
@@ -131,7 +128,6 @@ let run args =
       cp $"\frUnrecognized argument\f0: \fo{x}\f0"
       None
   let oo = args |> parseMore {
-    InfoMode = false
     Raw = false
     Wrap = true
     WikiId = None

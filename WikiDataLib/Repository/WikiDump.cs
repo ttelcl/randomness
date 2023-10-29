@@ -34,6 +34,11 @@ public class WikiDump
     MainRawIndexFileName = Path.Combine(Folder, $"{Id}-pages-articles-multistream-index.txt.bz2");
     MainIndexFileName = Path.Combine(Folder, $"{Id}-pages-articles-multistream-index.txt");
     StreamIndexFileName = Path.Combine(Folder, $"{Id}.stream-index.csv");
+    ArticleIndexFolderName = Path.Combine(Folder, "article-index");
+    if(!Directory.Exists(ArticleIndexFolderName))
+    {
+      Directory.CreateDirectory(ArticleIndexFolderName);
+    }
     Synchronize();
   }
 
@@ -55,7 +60,7 @@ public class WikiDump
   /// <summary>
   /// The folder containing the files for this dump
   /// </summary>
-  public string Folder {  get; init; }
+  public string Folder { get; init; }
 
   /// <summary>
   /// The full path to the main dump file (which may or may not yet exist).
@@ -100,6 +105,96 @@ public class WikiDump
   /// True if the stream index file is present (and complete)
   /// </summary>
   public bool HasStreamIndex { get => File.Exists(StreamIndexFileName); }
+
+  /// <summary>
+  /// The full path to the folder holding the partial article index files
+  /// </summary>
+  public string ArticleIndexFolderName { get; init; }
+
+  /// <summary>
+  /// Find the index where to continue gathering the article index
+  /// </summary>
+  public int NextArticleIndexStream()
+  {
+    var sliceEnds = ArticleIndexSlices().Select(ais => ais.EndIndex).ToList();
+    return sliceEnds.Count == 0 ? 1 : (sliceEnds.Max()+1);
+  }
+
+  /// <summary>
+  /// Load the article slice db
+  /// </summary>
+  public ArticleDb LoadArticleDb()
+  {
+    return new ArticleDb(this);
+  }
+
+  /// <summary>
+  /// Return a list of the partial article index slices found in the article index folder
+  /// </summary>
+  internal List<ArticleIndexSlice> ArticleIndexSlices()
+  {
+    var slices = new List<ArticleIndexSlice>();
+    var di = new DirectoryInfo(ArticleIndexFolderName);
+    foreach(var fi in di.EnumerateFiles($"{Id}.i-*.partidx.csv"))
+    {
+      var parts = fi.Name.Split('.');
+      if(parts.Length == 4)
+      {
+        slices.Add(ArticleIndexSlice.ParseFileName(fi.FullName));
+      }
+    }
+    return slices.OrderBy(slice => slice.StartIndex).ToList();
+  }
+
+  /// <summary>
+  /// Merge article index slices
+  /// </summary>
+  /// <param name="slices">
+  /// The slices to merge. Must be sorted and contiguous
+  /// </param>
+  /// <returns>
+  /// The descriptor for the new merged slice
+  /// </returns>
+  public static ArticleIndexSlice MergeArticleIndexSlices(IEnumerable<ArticleIndexSlice> slices)
+  {
+    var slicelist = slices.ToList();
+    if(slicelist.Count > 1) // else it would be a NOP
+    {
+      for(var i = 1; i < slicelist.Count; i++)
+      {
+        if(slicelist[i-1].EndIndex + 1 != slicelist[i].StartIndex)
+        {
+          throw new ArgumentException(
+            $"Expecting contiguous article index slices, but [..{slicelist[i-1].EndIndex}] does not touch [{slicelist[i].StartIndex}...]");
+        }
+      }
+      var aidx = new ArticleIndex();
+      foreach(var slice in slicelist)
+      {
+        // Console.WriteLine($"[[{slice.FileName}]]");
+        aidx.Import(slice.FileName);
+      }
+      var sample = slicelist[0];
+      var combined = new ArticleIndexSlice(
+        Path.GetDirectoryName(sample.FileName)!,
+        sample.WikiId,
+        slicelist[0].StartIndex,
+        slicelist[^1].EndIndex);
+      var tmpName = combined.FileName + ".tmp";
+      aidx.Save(tmpName);
+      // now patch up the file names
+      foreach(var slice in slicelist)
+      {
+        File.Move(slice.FileName, slice.FileName + ".bak", true);
+      }
+      File.Move(tmpName, combined.FileName, true);
+      return combined;
+    }
+    else
+    {
+      return slicelist[0];
+    }
+  }
 
   /// <summary>
   /// Synchronize the state of this instance with the disk state.

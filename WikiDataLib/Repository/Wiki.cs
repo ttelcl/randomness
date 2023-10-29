@@ -10,6 +10,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Newtonsoft.Json;
+
+using WikiDataLib.WikiContent;
+
 namespace WikiDataLib.Repository;
 
 /// <summary>
@@ -36,6 +40,17 @@ public class Wiki
     { 
       Directory.CreateDirectory(Folder);
     }
+    var parseSettingsFile = Path.Combine(Folder, $"{WikiTag}.parse-settings.json");
+    if(!File.Exists(parseSettingsFile))
+    {
+      ParseSettings = new WikiModelParseSettings(null, null);
+      File.WriteAllText(parseSettingsFile, JsonConvert.SerializeObject(ParseSettings, Formatting.Indented));
+    }
+    else
+    {
+      var json = File.ReadAllText(parseSettingsFile);
+      ParseSettings = JsonConvert.DeserializeObject<WikiModelParseSettings>(json)!;
+    }
     SynchronizeDumps(false);
   }
 
@@ -58,6 +73,12 @@ public class Wiki
   /// Enumerate the tracked dumps
   /// </summary>
   public IReadOnlyCollection<WikiDump> Dumps { get => _dumps.Values; }
+
+  /// <summary>
+  /// Wiki text parser settings and modifiers, loaded from the configuration file
+  /// in the wiki root folder, if there was one
+  /// </summary>
+  public WikiModelParseSettings ParseSettings { get; }
 
   /// <summary>
   /// Return a known WikiDump instance, or null if not found

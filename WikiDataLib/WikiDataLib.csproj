@@ -9,8 +9,18 @@
 
   <ItemGroup>
     <PackageReference Include="CXuesong.MW.MwParserFromScratch" Version="0.3.0-int.6" />
+    <PackageReference Include="Lcl.XsvLib" Version="2.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="enwiki.parse-settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="fiwiki.parse-settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

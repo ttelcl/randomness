@@ -1,0 +1,13 @@
+{
+  "image-namespaces": [
+    "File",
+    "Image"
+  ],
+  "category-aliases": [
+    "Category"
+  ],
+  "alphabet": "abcdefghijklmnopqrstuvwxyz",
+  "remove-at-end": [
+    "'s"
+  ]
+}
