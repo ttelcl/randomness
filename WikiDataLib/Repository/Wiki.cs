@@ -51,6 +51,11 @@ public class Wiki
       var json = File.ReadAllText(parseSettingsFile);
       ParseSettings = JsonConvert.DeserializeObject<WikiModelParseSettings>(json)!;
     }
+    ExportFolder = Path.Combine(Folder, "exports");
+    if(!Directory.Exists(ExportFolder))
+    {
+      Directory.CreateDirectory(ExportFolder);
+    }
     SynchronizeDumps(false);
   }
 
@@ -67,7 +72,12 @@ public class Wiki
   /// <summary>
   /// The folder containing the data for this wiki
   /// </summary>
-  public string Folder {  get; init; }
+  public string Folder { get; init; }
+
+  /// <summary>
+  /// The directory for saving exported files
+  /// </summary>
+  public string ExportFolder { get; init; }
 
   /// <summary>
   /// Enumerate the tracked dumps

@@ -12,11 +12,13 @@ open WikiDataLib.WikiContent
 
 open ColorPrint
 open CommonTools
-open AppArticleIndex
 
 type private SearchCommand =
   | ByPage of int64
 
+type private ExtractLocation =
+  | Local
+  | WikiFolder
 
 type private StudyExportOptions = {
   WikiId: WikiDumpId option
@@ -25,6 +27,14 @@ type private StudyExportOptions = {
   WriteWikiText: bool
   WritePlainText: bool
   WriteWords: bool
+  Location: ExtractLocation option
+}
+
+type ExportContext = {
+  Dump: WikiDump
+  SubIndex: SubstreamIndex
+  WikiRoot: Wiki
+  ExportFolder: string
 }
 
 let private searchIndexPage pageId (index: ArticleIndex) =
@@ -47,16 +57,17 @@ let private exportPagePlain o context prefix (page: WikiXmlPage) =
   let model = new WikiModel(settings, page.Content)
   if o.WritePlainText then
     let ptxName = prefix + ".plain.txt"
-    cp $"Saving \fg{ptxName}\f0."
-    File.WriteAllLines(ptxName, model.PlaintextLines(true))
+    cp $"Saving \fg{ptxName}\f0 in \fc{context.ExportFolder}\f0."
+    File.WriteAllLines(Path.Combine(context.ExportFolder, ptxName), model.PlaintextLines(true))
   if o.WriteWords then
     //let wordsDbgName = prefix + ".words-dbg.txt"
     //cp $"Saving \fo{wordsDbgName}\f0."
     //File.WriteAllLines(wordsDbgName, model.EnumerateWords())
     let wordsName = prefix + ".words.csv"
-    cp $"Saving \fg{wordsName}\f0."
+    let fullName = Path.Combine(context.ExportFolder, wordsName)
+    cp $"Saving \fg{wordsName}\f0 in \fc{context.ExportFolder}\f0."
     let wordMap = model.GatherWordCounts()
-    use w = File.CreateText(wordsName)
+    use w = File.CreateText(fullName)
     w.WriteLine("word,count")
     let wordCounts =
       wordMap
@@ -71,41 +82,55 @@ let private exportPagePlain o context prefix (page: WikiXmlPage) =
 let private exportPage context o (row: ArticleIndexRow) =
   let dump = context.Dump
   let subindex = context.SubIndex
-  use main = dump.OpenMainDump()
-  let substream = subindex.OpenConcatenation(main, [row.StreamId], true)
-  let pages =
-    substream
-    |> WikiXml.ReadPageFragments
-    |> Seq.map (fun xpd -> new WikiXmlPage(xpd))
-    |> Seq.filter (fun wxp -> wxp.Id = row.PageId)
-    |> Seq.toArray
-  if pages.Length = 0 then
-    cp $"\frIndex Error\f0: \fopage {row.PageId}\fy not found in stream \fo{row.StreamId}\f0."
-    1
-  elif pages.Length > 1 then
-    cp $"\frIndex Error\f0: \fopage {row.PageId}\fy found multiple times in stream \fo{row.StreamId}\f0???"
-    1
-  else
-    let page = pages[0]
-    let slug = row.MakeSlug()
-    let prefix = $"{dump.Id.WikiTag}.p%08d{row.PageId}.{slug}"
-    if o.WriteXml then
-      let xmlName = prefix + ".xml"
-      cp $"Saving \fg{xmlName}\f0."
-      let xws = new XmlWriterSettings()
-      xws.Indent <- true
-      use xw = XmlWriter.Create(xmlName, xws)
-      xw.WriteStartDocument()
-      let nav = page.Doc.CreateNavigator()
-      nav.WriteSubtree(xw)
-    if o.WriteWikiText then
-      let wtxName = prefix + ".wiki.txt"
-      let wtx = page.Content
-      cp $"Saving \fg{wtxName}\f0."
-      File.WriteAllText(wtxName, wtx)
-    if o.WritePlainText || o.WriteWords then
-      page |> exportPagePlain o context prefix
+  let slug = row.MakeSlug()
+  let prefix = $"{dump.Id.WikiTag}.p%08d{row.PageId}.{slug}"
+  let missingFileNames =
+    [
+      if o.WriteXml then Some(".xml") else None
+      if o.WritePlainText then Some(".plain.txt") else None
+      if o.WriteWords then Some(".words.csv") else None
+      if o.WriteWikiText then Some(".wiki.txt") else None
+    ]
+    |> List.choose id
+    |> List.map (fun suffix -> Path.Combine(context.ExportFolder, prefix + suffix))
+    |> List.filter (fun fileName -> fileName |> File.Exists |> not)
+  if missingFileNames.Length = 0 then
+    cp $"\foSkipping \fg{prefix}\f0: \fyAll files to extract already exist\f0"
     0
+  else
+    use main = dump.OpenMainDump()
+    let substream = subindex.OpenConcatenation(main, [row.StreamId], true)
+    let pages =
+      substream
+      |> WikiXml.ReadPageFragments
+      |> Seq.map (fun xpd -> new WikiXmlPage(xpd))
+      |> Seq.filter (fun wxp -> wxp.Id = row.PageId)
+      |> Seq.toArray
+    if pages.Length = 0 then
+      cp $"\frIndex Error\f0: \fopage {row.PageId}\fy not found in stream \fo{row.StreamId}\f0."
+      1
+    elif pages.Length > 1 then
+      cp $"\frIndex Error\f0: \fopage {row.PageId}\fy found multiple times in stream \fo{row.StreamId}\f0???"
+      1
+    else
+      let page = pages[0]
+      if o.WriteXml then
+        let xmlName = prefix + ".xml"
+        cp $"Saving \fg{xmlName}\f0 in \fc{context.ExportFolder}\f0."
+        let xws = new XmlWriterSettings()
+        xws.Indent <- true
+        use xw = XmlWriter.Create(Path.Combine(context.ExportFolder, xmlName), xws)
+        xw.WriteStartDocument()
+        let nav = page.Doc.CreateNavigator()
+        nav.WriteSubtree(xw)
+      if o.WriteWikiText then
+        let wtxName = prefix + ".wiki.txt"
+        let wtx = page.Content
+        cp $"Saving \fg{wtxName}\f0 in \fc{context.ExportFolder}\f0."
+        File.WriteAllText(Path.Combine(context.ExportFolder, wtxName), wtx)
+      if o.WritePlainText || o.WriteWords then
+        page |> exportPagePlain o context prefix
+      0
 
 let private runExport o =
   let command =
@@ -142,10 +167,23 @@ let private runExport o =
           cp "\foAmbiguous search result\f0. Skipping file export."
           0
         else
+          let wiki = repo.FindWiki(dump.Id.WikiTag)
+          let exportFolder =
+            match o.Location with
+            | Some(ExtractLocation.Local) ->
+              Path.Combine(Environment.CurrentDirectory, $"{wiki.WikiTag}-exports")
+            | Some(ExtractLocation.WikiFolder) ->
+              wiki.ExportFolder
+            | None ->
+              failwith "Missing export location"
+          if exportFolder |> Directory.Exists |> not then
+            cp $"\fyCreating folder \fc{exportFolder}\f0."
+            exportFolder |> Directory.CreateDirectory |> ignore
           let context = {
             Dump = dump
             SubIndex = subindex
-            WikiRoot = repo.FindWiki(dump.Id.WikiTag)
+            WikiRoot = wiki
+            ExportFolder = exportFolder
           }
           results[0] |> exportPage context o
       else
@@ -173,9 +211,16 @@ let run args =
       rest |> parseMore {o with WriteWords = true}
     | "-xml" :: rest ->
       rest |> parseMore {o with WriteXml = true}
+    | "-w" :: rest ->
+      rest |> parseMore {o with Location = Some(ExtractLocation.WikiFolder)}
+    | "-l" :: rest ->
+      rest |> parseMore {o with Location = Some(ExtractLocation.Local)}
     | [] ->
       if o.Search.IsNone then
         cp "\frNo page select option specified\f0."
+        None
+      elif o.Location.IsNone then
+        cp "\frNo write location specified\f0 (\fo-l\f0 or \fo-w\f0)"
         None
       else
         Some(o)
@@ -189,6 +234,7 @@ let run args =
     WriteWikiText = false
     WritePlainText = false
     WriteWords = false
+    Location = None
   }
   match oo with
   | Some(o) ->
