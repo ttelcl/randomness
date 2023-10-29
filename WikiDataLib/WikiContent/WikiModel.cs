@@ -58,7 +58,6 @@ public class WikiModel
   /// </param>
   public IEnumerable<string> PlaintextLines(bool stripTables)
   {
-    // TODO: Category links
     var lines = Model.ToPlainText()
       .Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None) ?? Array.Empty<string>();
     var tableLevel = 0;
@@ -80,7 +79,7 @@ public class WikiModel
         {
           line2 = String.Empty;
         }
-        var isEmpty = String.IsNullOrEmpty(line2);
+        var isEmpty = String.IsNullOrWhiteSpace(line2);
         if(!isEmpty || !wasEmpty) // avoid multiple empty lines
         {
           yield return line2;
