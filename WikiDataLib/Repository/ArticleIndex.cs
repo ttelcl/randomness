@@ -58,6 +58,36 @@ public class ArticleIndex
   }
 
   /// <summary>
+  /// Return titles matching the given text (case insensitively)
+  /// </summary>
+  /// <param name="title">
+  /// The title text to find
+  /// </param>
+  /// <param name="exact">
+  /// If true, only return cases where the entire title exactly matches <paramref name="title"/>
+  /// </param>
+  public IEnumerable<ArticleIndexRow> FindMatchingTitles(string title, bool exact)
+  {
+    foreach(var row in _rowsById.Values)
+    {
+      if(exact)
+      {
+        if(StringComparer.OrdinalIgnoreCase.Equals(row.Title, title))
+        {
+          yield return row; 
+        }
+      }
+      else
+      {
+        if(row.Title.Contains(title, StringComparison.OrdinalIgnoreCase))
+        {
+          yield return row;
+        }
+      }
+    }
+  }
+
+  /// <summary>
   /// The rows in this index
   /// </summary>
   public IReadOnlyCollection<ArticleIndexRow> Rows { get => _rowsById.Values; }

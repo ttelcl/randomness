@@ -67,7 +67,8 @@ let usage detail =
   if showSynopsis "study" then
     cp "\fowikidata study init\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>"
     cp "   Initialize a new study in the current directory. The Wiki ID can act as default for other commands."
-    cpx "\fowikidata study export\f0 [\fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>] [\fg-l\f0|\fg-w\f0] \fg-page\f0 <\fcpage-id\f0>" 
+    cpx "\fowikidata study export\f0 [\fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>] [\fg-l\f0|\fg-w\f0]"
+    cpx " [\fg-page\f0 <\fcpage-id\f0>|\fg-search\f0 <\fctext\f0>]"
     cp " [\fg-xml\f0] [\fg-text\f0] [\fg-plain\f0] [\fg-words\f0]"
     cp "   Locate an article in the current wiki's article index and export it to one or more file formats"
   if showDescription "study" then

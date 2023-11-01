@@ -15,6 +15,7 @@ open CommonTools
 
 type private SearchCommand =
   | ByPage of int64
+  | ByTitleText of string
 
 type private ExtractLocation =
   | Local
@@ -46,10 +47,20 @@ let private searchDbPage pageId (articleDb: ArticleDb) =
   |> Seq.choose (searchIndexPage pageId)
   |> Seq.tryHead
 
+let private searchIndexTitles text (index: ArticleIndex) =
+  index.FindMatchingTitles(text, false)
+
+let private searchDbTitles text (articleDb: ArticleDb) =
+  articleDb.Slices
+  |> Seq.map(ArticleIndex.FromSlice)
+  |> Seq.collect (searchIndexTitles text)
+
 let private searchDb command articleDb =
   match command with
   | SearchCommand.ByPage(pageId) ->
     articleDb |> searchDbPage pageId |> Option.toList
+  | SearchCommand.ByTitleText(text) ->
+    articleDb |> searchDbTitles text |> Seq.toList
 
 let private exportPagePlain o context prefix (page: WikiXmlPage) =
   let wiki = context.WikiRoot
@@ -202,6 +213,9 @@ let run args =
       rest |> parseMore {o with WikiId = Some(wdi)}
     | "-page" :: pageid :: rest ->
       let command = pageid |> Int64.Parse |> SearchCommand.ByPage
+      rest |> parseMore {o with Search = Some(command)}
+    | "-search" :: text :: rest ->
+      let command = text |> SearchCommand.ByTitleText
       rest |> parseMore {o with Search = Some(command)}
     | "-text" :: rest ->
       rest |> parseMore {o with WriteWikiText = true}
