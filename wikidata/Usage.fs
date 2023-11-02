@@ -68,12 +68,15 @@ let usage detail =
     cp "\fowikidata study init\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>"
     cp "   Initialize a new study in the current directory. The Wiki ID can act as default for other commands."
     cpx "\fowikidata study export\f0 [\fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>] [\fg-l\f0|\fg-w\f0]"
-    cpx " [\fg-page\f0 <\fcpage-id\f0>|\fg-search\f0 <\fctext\f0>]"
+    cpx " [\fg-page\f0 <\fcpage-id\f0>|\fg-search\f0 <\fctext\f0>] [\fg-max\f0 <\fcn\f0>|\fg-cap\f0 <\fcn\f0>|-all]"
     cp " [\fg-xml\f0] [\fg-text\f0] [\fg-plain\f0] [\fg-words\f0]"
     cp "   Locate an article in the current wiki's article index and export it to one or more file formats"
   if showDescription "study" then
     cp "   \fg-l\f0\fx\fx                  Save to the current directory (alias: \fg-local\f0)"
     cp "   \fg-w\f0\fx\fx                  Save to the wiki repository (alias: \fg-wikirepo\f0)"
+    cp "   \fg-max\f0 <\fcn\f0>            The maximum number of matches. If there are more, nothing will be exported. Default 1"
+    cp "   \fg-cap\f0 <\fcn\f0>            The maximum number of matches. Only up to this will be exported."
+    cp "   \fg-all\f0 \fx\fx               No limit. (CTRL-C will cancel after next export)"
     cp ""
   
   if showSynopsis "extract" then
