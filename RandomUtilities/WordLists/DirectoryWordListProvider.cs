@@ -56,7 +56,9 @@ public class DirectoryWordListProvider: WordListProvider
   {
     if(!WordList.IsValidLabel(label))
     {
-      throw new ArgumentOutOfRangeException(nameof(label), $"Not a valid label: '{label}'");
+      throw new ArgumentOutOfRangeException(
+        nameof(label),
+        $"Not a valid label: '{label}' (in word list folder '{Folder}')");
     }
     var shortFileName = $"{label}.wordlist.txt";
     var fileName = Path.Combine(Folder, shortFileName);
