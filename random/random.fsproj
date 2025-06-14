@@ -20,6 +20,7 @@
     <Compile Include="AppBased.fs" />
     <Compile Include="AppCharacters.fs" />
     <Compile Include="AppWords.fs" />
+    <Compile Include="AppWordlets.fs" />
     <Compile Include="Program.fs" />
     <None Include="README.md" />
   </ItemGroup>
