@@ -1,6 +1,7 @@
 ﻿module AppGather
 
 open System
+open System.IO
 
 open RandomUtilities.CharacterDistributions
 open RandomUtilities.WordLists
@@ -8,8 +9,14 @@ open RandomUtilities.WordLists
 open ColorPrint
 open CommonTools
 
+type WeightedWord = {
+  Word: string
+  Weight: int
+}
+
 type WordSource =
   | ListSource of string
+  | WordCountFile of string * bool // filename * useweight
 
 type private GatherOptions = {
   Order: int
@@ -29,24 +36,37 @@ let private enumerateWordsInSource wordSource =
     let wl = wlc.FindList(wordlistLabel, wlc)
     if wl = null then
       failwith $"Unknown word list or invalid word list expression: '{wordlistLabel}'"
-    wl.Words :> seq<string>
+    wl.Words |> Seq.map (fun s -> {Word = s; Weight = 1})
+  | WordCountFile(fileName, useWeight) ->
+    let wordWeightPairs =
+      fileName
+      |> File.ReadLines
+      |> Seq.skip 1 // skip header
+      |> Seq.map (fun line -> line.Split(','))
+    if useWeight then
+      wordWeightPairs
+      |> Seq.filter (fun a -> a.Length >= 2)
+      |> Seq.map (fun pair -> {Word = pair[0]; Weight = pair[1] |> Int32.Parse})
+    else
+      wordWeightPairs
+      |> Seq.filter (fun a -> a.Length >= 1)
+      |> Seq.map (fun pair -> {Word = pair[0]; Weight = 1})
 
 let private runGather o =
   let alphabet = new Alphabet(o.AlphabetSpec, o.Boundary)
   let collector = new FragmentDistribution(alphabet, o.Order)
-  let weight = 1
   for source in o.Sources do
     let words =
       source
       |> enumerateWordsInSource
-      |> Seq.filter (fun word -> alphabet.IsRepresentable(word, false))
+      |> Seq.filter (fun ww -> alphabet.IsRepresentable(ww.Word, false))
     let words =
       if o.AllowShort then
         words
       else
-        words |> Seq.filter (fun word -> word.Length >= o.Order)
-    for word in words do
-      collector.AddWord(word, weight)
+        words |> Seq.filter (fun ww -> ww.Word.Length >= o.Order)
+    for ww in words do
+      collector.AddWord(ww.Word, ww.Weight)
   if collector.Total < 1 then
     cp "\frNo acceptable words found in the source(s)\f0."
     1
@@ -95,6 +115,16 @@ let run args =
     | "-words" :: label :: rest ->
       let lst = WordSource.ListSource(label)
       rest |> parseMore {o with Sources = lst :: o.Sources}
+    | "-wc" :: fnm :: rest ->
+      if fnm |> File.Exists |> not then
+        failwith $"No such file: {fnm}"
+      let src = WordSource.WordCountFile(fnm, false)
+      rest |> parseMore {o with Sources = src :: o.Sources}
+    | "-wcw" :: fnm :: rest ->
+      if fnm |> File.Exists |> not then
+        failwith $"No such file: {fnm}"
+      let src = WordSource.WordCountFile(fnm, true)
+      rest |> parseMore {o with Sources = src :: o.Sources}
     | "-a" :: alphabetSpec :: rest ->
       rest |> parseMore {o with AlphabetSpec = alphabetSpec}
     | "-b" :: boundary :: rest ->
@@ -112,8 +142,8 @@ let run args =
       if o.Order < 0 then
         failwith "No order (-n) specified"
       if o.Sources |> List.isEmpty then
-        failwith "No word source(s) specified (-words)"
-      Some(o)
+        failwith "No word source(s) specified (-words, -wc, -wcw)"
+      Some({o with Sources = o.Sources |> List.rev})
     | x :: _ ->
       cp $"\frUnrecognized argument\f0 '\fo{x}\f0'"
       None

@@ -13,6 +13,7 @@ open CommonTools
 type private GenerateOptions = {
   RepeatCount: int
   SourceFile: string
+  MinLength: int
 }
 
 let private runGenerate o =
@@ -23,8 +24,11 @@ let private runGenerate o =
     |> LetterDistribution.FromDto
   if dist.Order < 1 then
     failwith "The minimum supported distribution order is 1"
-  for i in 0..o.RepeatCount-1 do
-    let word = dist.RandomWord(randombits)
+  let words =
+    Seq.initInfinite (fun i -> dist.RandomWord(randombits))
+    |> Seq.filter (fun s -> s.Length >= o.MinLength)
+    |> Seq.truncate o.RepeatCount
+  for word in words do
     cp $"\fg{word}\f0"
   0
 
@@ -38,6 +42,8 @@ let run args =
       None
     | "-n" :: repeatText :: rest ->
       rest |> parseMore {o with RepeatCount = repeatText |> Int32.Parse}
+    | "-m" :: minLength :: rest ->
+      rest |> parseMore {o with MinLength = minLength |> Int32.Parse}
     | "-f" :: fileName :: rest ->
       if fileName |> File.Exists |> not then
         failwith $"File not found: {fileName}"
@@ -54,6 +60,7 @@ let run args =
   let oo = args |> parseMore {
     RepeatCount = 1
     SourceFile = null
+    MinLength = 4
   }
   match oo with
   | Some(o) -> 
