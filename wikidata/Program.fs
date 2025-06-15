@@ -51,6 +51,8 @@ let rec run arglist =
   | "study" :: [] ->
     usage "study"
     1
+  | "search" :: rest ->
+    rest |> AppSearch.run
   | x :: _ ->
     cp $"\frUnrecognized argument\f0: \fo{x}\f0."
     usage "short"
