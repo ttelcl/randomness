@@ -64,12 +64,43 @@ let usage detail =
     cp "   \fg-repeat\f0 <\fccount\f0>\fx\fx     Repeat the \fg-n\f0 (or \fg-N\f0) command \fccount\f0 times."
     cp ""
 
+  if showSynopsis "search" then
+    cpx "\fowikidata search\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0> "
+    cpx "[\fg-max\f0 <\fccount\f0>] "
+    cpx "[\fg-tag\f0 <\fctag\f0>] "
+    cpx "[\fg-minbytes\f0 <\fccount\f0>] "
+    cpx "[\fg-maxbytes\f0 <\fccount\f0>] "
+    cpx "{\fg-has\f0 <\fctext\f0>} "
+    cp "{\fg-hasnot\f0 <\fctext\f0>} "
+    cp "   Create a subset of the article partial indices containing matching records."
+    cp "   Saves the result as <\fctag\f0>\fy.articles.csv\f0."
+  if showDescription "search" then
+    cp "   \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>   The wiki dump to extract from"
+    cp "   \fg-tag\f0 <\fctag\f0>\fx\fx          Used to derive the output name. Default: no output."
+    cp "   \fg-max\f0 <\fccount\f0>\fx\fx        The maximum number of matches to return. Default \fb1000\f0."
+    cp "   \fg-minbytes\f0 <\fccount\f0>\fx\fx   The minimum number of wiki bytes in the entry."
+    cp "   \fg-maxbytes\f0 <\fccount\f0>\fx\fx   The maximum number of wiki bytes in the entry."
+    cp "   \fg-has\f0 <\fctext\f0>\fx\fx         Only include records with <\fctext\f0> in the title."
+    cp "   \fg-hasnot\f0 <\fctext\f0>\fx\fx      Exclude records with <\fctext\f0> in the title."
+    cp ""
+  
   if showSynopsis "study" then
     cp "\fowikidata study init\f0 \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>"
     cp "   Initialize a new study in the current directory. The Wiki ID can act as default for other commands."
-    cp "\fowikidata study export\f0 \fg-page\f0 <\fcpage-id\f0> [\fg-xml\f0] [\fg-text\f0] [\fg-plain\f0] [\fg-words\f0]"
+  if showDescription "study" then
+    cp ""
+  
+  if showSynopsis "study" then
+    cpx "\fowikidata study export\f0 [\fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>] [\fg-l\f0|\fg-w\f0]"
+    cpx " [\fg-page\f0 <\fcpage-id\f0>|\fg-search\f0 <\fctext\f0>] [\fg-max\f0 <\fcn\f0>|\fg-cap\f0 <\fcn\f0>|-all]"
+    cp " [\fg-xml\f0] [\fg-text\f0] [\fg-plain\f0] [\fg-words\f0]"
     cp "   Locate an article in the current wiki's article index and export it to one or more file formats"
   if showDescription "study" then
+    cp "   \fg-l\f0\fx\fx                  Save to the current directory (alias: \fg-local\f0)"
+    cp "   \fg-w\f0\fx\fx                  Save to the wiki repository (alias: \fg-wikirepo\f0)"
+    cp "   \fg-max\f0 <\fcn\f0>            The maximum number of matches. If there are more, nothing will be exported. Default 1"
+    cp "   \fg-cap\f0 <\fcn\f0>            The maximum number of matches. Only up to this will be exported."
+    cp "   \fg-all\f0 \fx\fx               No limit. (CTRL-C will cancel after next export)"
     cp ""
   
   if showSynopsis "extract" then

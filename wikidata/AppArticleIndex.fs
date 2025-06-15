@@ -26,7 +26,6 @@ type private ArtIdxOptions = {
 type WikiContext = {
   Dump: WikiDump
   SubIndex: SubstreamIndex
-  WikiRoot: Wiki
 }
 
 type private SliceGroupState = {
@@ -137,7 +136,6 @@ let private runArtIdx o =
   let context = {
     SubIndex = subindex
     Dump = dump
-    WikiRoot = wikiroot
   }
   match o.Subcommand with
     | None ->

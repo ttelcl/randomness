@@ -383,4 +383,27 @@ public static class ByteSourceExtensions
     }
   }
 
+  /// <summary>
+  /// Randomly pick one of the samples
+  /// </summary>
+  /// <typeparam name="T">
+  /// The type of the samples
+  /// </typeparam>
+  /// <param name="randomSource">
+  /// The source of randomness
+  /// </param>
+  /// <param name="samples">
+  /// The samples to pick from. There must be at least one.
+  /// </param>
+  public static T RandomPick<T>(this BitSource randomSource, IReadOnlyList<T> samples)
+  {
+    if(!samples.Any())
+    {
+      throw new ArgumentOutOfRangeException(
+        nameof(samples),
+        "Expecting at least one sample to pick from");
+    }
+    var idx = randomSource.RandomInteger(samples.Count-1, 0);
+    return samples[idx];
+  }
 }

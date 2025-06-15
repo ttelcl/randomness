@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -26,6 +26,7 @@
     <Compile Include="AppDump.fs" />
     <Compile Include="AppStudyInit.fs" />
     <Compile Include="AppStudyExport.fs" />
+    <Compile Include="AppSearch.fs" />
     <Compile Include="Program.fs" />
     <None Include="README.md" />
   </ItemGroup>
@@ -35,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="7.0.400" />
+    <PackageReference Update="FSharp.Core" Version="9.0.300" />
   </ItemGroup>
 
 </Project>

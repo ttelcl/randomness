@@ -12,11 +12,19 @@ open WikiDataLib.WikiContent
 
 open ColorPrint
 open CommonTools
-open AppArticleIndex
 
 type private SearchCommand =
   | ByPage of int64
+  | ByTitleText of string
 
+type private ExtractLocation =
+  | Local
+  | WikiFolder
+
+type ExportLimit =
+  | MaxLimit of int
+  | CapLimit of int
+  | NoLimit
 
 type private StudyExportOptions = {
   WikiId: WikiDumpId option
@@ -25,6 +33,15 @@ type private StudyExportOptions = {
   WriteWikiText: bool
   WritePlainText: bool
   WriteWords: bool
+  Location: ExtractLocation option
+  Limit: ExportLimit
+}
+
+type ExportContext = {
+  Dump: WikiDump
+  SubIndex: SubstreamIndex
+  WikiRoot: Wiki
+  ExportFolder: string
 }
 
 let private searchIndexPage pageId (index: ArticleIndex) =
@@ -36,10 +53,20 @@ let private searchDbPage pageId (articleDb: ArticleDb) =
   |> Seq.choose (searchIndexPage pageId)
   |> Seq.tryHead
 
+let private searchIndexTitles text (index: ArticleIndex) =
+  index.FindMatchingTitles(text, false)
+
+let private searchDbTitles text (articleDb: ArticleDb) =
+  articleDb.Slices
+  |> Seq.map(ArticleIndex.FromSlice)
+  |> Seq.collect (searchIndexTitles text)
+
 let private searchDb command articleDb =
   match command with
   | SearchCommand.ByPage(pageId) ->
     articleDb |> searchDbPage pageId |> Option.toList
+  | SearchCommand.ByTitleText(text) ->
+    articleDb |> searchDbTitles text |> Seq.toList
 
 let private exportPagePlain o context prefix (page: WikiXmlPage) =
   let wiki = context.WikiRoot
@@ -47,16 +74,17 @@ let private exportPagePlain o context prefix (page: WikiXmlPage) =
   let model = new WikiModel(settings, page.Content)
   if o.WritePlainText then
     let ptxName = prefix + ".plain.txt"
-    cp $"Saving \fg{ptxName}\f0."
-    File.WriteAllLines(ptxName, model.PlaintextLines(true))
+    cp $"Saving \fg{ptxName}\f0 in \fc{context.ExportFolder}\f0."
+    File.WriteAllLines(Path.Combine(context.ExportFolder, ptxName), model.PlaintextLines(true))
   if o.WriteWords then
     //let wordsDbgName = prefix + ".words-dbg.txt"
     //cp $"Saving \fo{wordsDbgName}\f0."
     //File.WriteAllLines(wordsDbgName, model.EnumerateWords())
     let wordsName = prefix + ".words.csv"
-    cp $"Saving \fg{wordsName}\f0."
+    let fullName = Path.Combine(context.ExportFolder, wordsName)
+    cp $"Saving \fg{wordsName}\f0 in \fc{context.ExportFolder}\f0."
     let wordMap = model.GatherWordCounts()
-    use w = File.CreateText(wordsName)
+    use w = File.CreateText(fullName)
     w.WriteLine("word,count")
     let wordCounts =
       wordMap
@@ -68,8 +96,44 @@ let private exportPagePlain o context prefix (page: WikiXmlPage) =
     cp $"Word count: total \fb{wordCounts |> Seq.sumBy (fun (_,v) -> v)}\f0, distinct: \fy{wordCounts.Length}\f0 "
   ()
 
+let private anyDumpsMissing context o (row: ArticleIndexRow) =
+  let dump = context.Dump
+  let slug = row.MakeSlug()
+  let prefix = $"{dump.Id.WikiTag}.p%08d{row.PageId}.{slug}"
+  let missingFileNames =
+    [
+      if o.WriteXml then Some(".xml") else None
+      if o.WritePlainText then Some(".plain.txt") else None
+      if o.WriteWords then Some(".words.csv") else None
+      if o.WriteWikiText then Some(".wiki.txt") else None
+    ]
+    |> List.choose id
+    |> List.map (fun suffix -> Path.Combine(context.ExportFolder, prefix + suffix))
+    |> List.filter (fun fileName -> fileName |> File.Exists |> not)
+  if missingFileNames.Length > 0 then
+    true
+  else
+    // cp $"\foSkipping \fg{prefix}\f0: \fyAll files to extract already exist\f0"
+    false
+
 let private exportPage context o (row: ArticleIndexRow) =
   let dump = context.Dump
+  let slug = row.MakeSlug()
+  let prefix = $"{dump.Id.WikiTag}.p%08d{row.PageId}.{slug}"
+  //let missingFileNames =
+  //  [
+  //    if o.WriteXml then Some(".xml") else None
+  //    if o.WritePlainText then Some(".plain.txt") else None
+  //    if o.WriteWords then Some(".words.csv") else None
+  //    if o.WriteWikiText then Some(".wiki.txt") else None
+  //  ]
+  //  |> List.choose id
+  //  |> List.map (fun suffix -> Path.Combine(context.ExportFolder, prefix + suffix))
+  //  |> List.filter (fun fileName -> fileName |> File.Exists |> not)
+  //if missingFileNames.Length = 0 then
+  //  cp $"\foSkipping \fg{prefix}\f0: \fyAll files to extract already exist\f0"
+  //  0
+  //else
   let subindex = context.SubIndex
   use main = dump.OpenMainDump()
   let substream = subindex.OpenConcatenation(main, [row.StreamId], true)
@@ -87,22 +151,20 @@ let private exportPage context o (row: ArticleIndexRow) =
     1
   else
     let page = pages[0]
-    let slug = row.MakeSlug()
-    let prefix = $"{dump.Id.WikiTag}.p%08d{row.PageId}.{slug}"
     if o.WriteXml then
       let xmlName = prefix + ".xml"
-      cp $"Saving \fg{xmlName}\f0."
+      cp $"Saving \fg{xmlName}\f0 in \fc{context.ExportFolder}\f0."
       let xws = new XmlWriterSettings()
       xws.Indent <- true
-      use xw = XmlWriter.Create(xmlName, xws)
+      use xw = XmlWriter.Create(Path.Combine(context.ExportFolder, xmlName), xws)
       xw.WriteStartDocument()
       let nav = page.Doc.CreateNavigator()
       nav.WriteSubtree(xw)
     if o.WriteWikiText then
       let wtxName = prefix + ".wiki.txt"
       let wtx = page.Content
-      cp $"Saving \fg{wtxName}\f0."
-      File.WriteAllText(wtxName, wtx)
+      cp $"Saving \fg{wtxName}\f0 in \fc{context.ExportFolder}\f0."
+      File.WriteAllText(Path.Combine(context.ExportFolder, wtxName), wtx)
     if o.WritePlainText || o.WriteWords then
       page |> exportPagePlain o context prefix
     0
@@ -135,19 +197,65 @@ let private runExport o =
       0
     else
       cp $"Found \fb{results.Length}\f0 matching index records."
-      for result in results do
-        cp $"  Page \fg%-8d{result.PageId}\f0 in stream \fb%-8d{result.StreamId}\f0 \fy%-30s{result.Title}\f0 (\fb{result.ByteCount}\f0 bytes). "
+      let wiki = repo.FindWiki(dump.Id.WikiTag)
+      let exportFolder =
+        match o.Location with
+        | Some(ExtractLocation.Local) ->
+          Path.Combine(Environment.CurrentDirectory, $"{wiki.WikiTag}-exports")
+        | Some(ExtractLocation.WikiFolder) ->
+          wiki.ExportFolder
+        | None ->
+          failwith "Missing export location"
+      if exportFolder |> Directory.Exists |> not then
+        cp $"\fyCreating folder \fc{exportFolder}\f0."
+        exportFolder |> Directory.CreateDirectory |> ignore
+      let context = {
+        Dump = dump
+        SubIndex = subindex
+        WikiRoot = wiki
+        ExportFolder = exportFolder
+      }
+      let missingResults =
+        results
+        |> List.choose (fun result ->
+          let missing = result |> anyDumpsMissing context o
+          if missing then
+            cpx $"  Page \fg%-8d{result.PageId}\f0 in stream \fb%-8d{result.StreamId}\f0" 
+            cp $" \fy%-36s{result.Title}\f0 (\fb{result.ByteCount}\f0 bytes)."
+            Some(result)
+          else
+            cpx $"  \fkPage \fG%-8d{result.PageId}\fk in stream \fB%-8d{result.StreamId}\fk" 
+            cp $" \fo%-36s{result.Title}\fk (\fB{result.ByteCount}\fk bytes)\f0 (done)."
+            None)
       if o.WritePlainText || o.WriteWikiText || o.WriteXml || o.WriteWords then
-        if results.Length > 1 then
-          cp "\foAmbiguous search result\f0. Skipping file export."
+        if missingResults.Length = 0 then
+          cp "\fyAll search results were exported already\f0."
           0
         else
-          let context = {
-            Dump = dump
-            SubIndex = subindex
-            WikiRoot = repo.FindWiki(dump.Id.WikiTag)
-          }
-          results[0] |> exportPage context o
+          let targetResults =
+            match o.Limit with
+            | ExportLimit.MaxLimit(n) ->
+              if missingResults.Length > n then
+                cp $"Number if missing matches (\fb{missingResults.Length}\f0) exceeds maximum (\fc{n}\f0). \foSkipping downloads\f0!"
+                []
+              else
+                missingResults
+            | ExportLimit.CapLimit(n) ->
+              if missingResults.Length > n then
+                cp $"Number if missing matches (\fb{missingResults.Length}\f0) exceeds cap (\fc{n}\f0). \foCapping downloads\f0!"
+                missingResults |> List.take n
+              else
+                missingResults
+            | ExportLimit.NoLimit ->
+              missingResults
+          if targetResults.Length > 0 then
+            if targetResults.Length > 1 then
+              cp "\foNot implemented\f0: multiple downloads."
+              0
+            else
+              targetResults[0] |> exportPage context o
+          else
+            1
       else
         0
 
@@ -165,6 +273,9 @@ let run args =
     | "-page" :: pageid :: rest ->
       let command = pageid |> Int64.Parse |> SearchCommand.ByPage
       rest |> parseMore {o with Search = Some(command)}
+    | "-search" :: text :: rest ->
+      let command = text |> SearchCommand.ByTitleText
+      rest |> parseMore {o with Search = Some(command)}
     | "-text" :: rest ->
       rest |> parseMore {o with WriteWikiText = true}
     | "-plain" :: rest ->
@@ -173,9 +284,22 @@ let run args =
       rest |> parseMore {o with WriteWords = true}
     | "-xml" :: rest ->
       rest |> parseMore {o with WriteXml = true}
+    | "-w" :: rest ->
+      rest |> parseMore {o with Location = Some(ExtractLocation.WikiFolder)}
+    | "-l" :: rest ->
+      rest |> parseMore {o with Location = Some(ExtractLocation.Local)}
+    | "-max" :: n :: rest ->
+      rest |> parseMore {o with Limit = n |> Int32.Parse |> ExportLimit.MaxLimit}
+    | "-cap" :: n :: rest ->
+      rest |> parseMore {o with Limit = n |> Int32.Parse |> ExportLimit.CapLimit}
+    | "-all" :: rest ->
+      rest |> parseMore {o with Limit = ExportLimit.NoLimit}
     | [] ->
       if o.Search.IsNone then
         cp "\frNo page select option specified\f0."
+        None
+      elif o.Location.IsNone then
+        cp "\frNo write location specified\f0 (\fo-l\f0 or \fo-w\f0)"
         None
       else
         Some(o)
@@ -189,6 +313,8 @@ let run args =
     WriteWikiText = false
     WritePlainText = false
     WriteWords = false
+    Location = None
+    Limit = ExportLimit.MaxLimit(1)
   }
   match oo with
   | Some(o) ->

@@ -32,6 +32,8 @@ let rec run arglist =
     rest |> AppCharacters.run
   | "words" :: rest ->
     rest |> AppWords.run
+  | "wordlets" :: rest ->
+    rest |> AppWordlets.run
   | x :: _ ->
     cp $"\frUnrecognized command \fo{x}\f0."
     1
