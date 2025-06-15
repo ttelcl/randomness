@@ -26,6 +26,7 @@
     <Compile Include="AppDump.fs" />
     <Compile Include="AppStudyInit.fs" />
     <Compile Include="AppStudyExport.fs" />
+    <Compile Include="AppSearch.fs" />
     <Compile Include="Program.fs" />
     <None Include="README.md" />
   </ItemGroup>
