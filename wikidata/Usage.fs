@@ -76,7 +76,7 @@ let usage detail =
     cp "   Saves the result as <\fctag\f0>\fy.articles.csv\f0."
   if showDescription "search" then
     cp "   \fg-wiki\f0 <\fcwiki\fy-\fcdate\f0>   The wiki dump to extract from"
-    cp "   \fg-tag\f0 <\fctag\f0>\fx\fx          Used to derive the output name. Default \fysearch\f0."
+    cp "   \fg-tag\f0 <\fctag\f0>\fx\fx          Used to derive the output name. Default: no output."
     cp "   \fg-max\f0 <\fccount\f0>\fx\fx        The maximum number of matches to return. Default \fb1000\f0."
     cp "   \fg-minbytes\f0 <\fccount\f0>\fx\fx   The minimum number of wiki bytes in the entry."
     cp "   \fg-maxbytes\f0 <\fccount\f0>\fx\fx   The maximum number of wiki bytes in the entry."

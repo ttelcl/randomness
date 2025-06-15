@@ -45,22 +45,35 @@ let private runSearch o =
   let articleDb = dump.LoadArticleDb()
   let matches = new ArticleIndex()
 
-  // temporary shortcut - only evaluate first slice
   if articleDb.Slices.Count = 0 then
     failwith "No index slices found"
-  let slice = articleDb.Slices[0]
-  let index = slice |> ArticleIndex.FromSlice
-  let rows = index.Rows // |> Seq.truncate o.MaxMatches
+
+  let echoSlice (slice: ArticleIndexSlice) =
+    cp $"Scanning \fy{slice.FileName}\f0."
+    slice
+
   let matchingRows =
-    rows
+    articleDb.Slices
+    |> Seq.map echoSlice
+    |> Seq.map ArticleIndex.FromSlice
+    |> Seq.collect (fun aidx -> aidx.Rows)
     |> Seq.filter (isMatch o)
     |> Seq.truncate o.MaxMatches
-    |> Seq.toList
-  cp $"\fr DBG \f0 Got \fb{matchingRows.Length}\f0 rows."
   for row in matchingRows do
     cp $"\fb{row.ByteCount,7} \fc{row.PageId,12}  \fg{row.Title}\f0"
+    row |> matches.Put
+
+  cp $"Found \fb{matches.Rows.Count}\f0 matching rows."
+
+  if o.Tag |> String.IsNullOrEmpty then
+    cp "\foNo output tag specified.\f0 Not saving results to a file."
+  else
+    let outputName = $"{o.Tag}.articles.csv"
+    cp $"Saving \fg{outputName}\f0."
+    matches.Save(outputName + ".tmp")
+    outputName |> finishFile
   
-  1
+  0
 
 let run args =
   let rec parseMore o args =
@@ -96,7 +109,7 @@ let run args =
   let oo = args |> parseMore {
     WikiId = None
     MaxMatches = 1000
-    Tag = "search"
+    Tag = null
     MinBytes = 0
     MaxBytes = Int32.MaxValue
     MatchText = []
