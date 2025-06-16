@@ -21,6 +21,8 @@ let rec run arglist =
     rest |> AppGather.run
   | "generate" :: rest ->
     rest |> AppGenerate.run
+  | "wordcalc" :: rest ->
+    rest |> AppWordCalc.run
   | x :: _ ->
     cp $"\frUnknown command: \fo{x}\f0."
     1
