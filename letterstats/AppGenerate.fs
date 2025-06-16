@@ -15,6 +15,7 @@ type private GenerateOptions = {
   SourceFile: string
   MinLength: int
   MinBits: float
+  MaxBits: float
 }
 
 let private runGenerate o =
@@ -27,7 +28,7 @@ let private runGenerate o =
     failwith "The minimum supported distribution order is 1"
   let wordpairs =
     Seq.initInfinite (fun i -> dist.RandomWord(randombits))
-    |> Seq.filter (fun (s,f) -> s.Length >= o.MinLength && f >= o.MinBits)
+    |> Seq.filter (fun (s,f) -> s.Length >= o.MinLength && f >= o.MinBits && f <= o.MaxBits)
     |> Seq.truncate o.RepeatCount
   for (word,surprisal) in wordpairs do
     cp $"(\fb{surprisal:F1}\f0 bits) \fg{word}\f0"
@@ -47,6 +48,8 @@ let run args =
       rest |> parseMore {o with MinLength = minLength |> Int32.Parse}
     | "-mb" :: minBits :: rest ->
       rest |> parseMore {o with MinBits = minBits |> Double.Parse}
+    | "-xb" :: maxBits :: rest ->
+      rest |> parseMore {o with MaxBits = maxBits |> Double.Parse}
     | "-f" :: fileName :: rest ->
       if fileName |> File.Exists |> not then
         failwith $"File not found: {fileName}"
@@ -56,6 +59,8 @@ let run args =
     | [] ->
       if o.SourceFile |> String.IsNullOrEmpty then
         failwith "No file name specified"
+      if o.MinBits >= o.MaxBits then
+        failwith "-mb must be smaller than -xb (they should not be too close)"
       Some(o)
     | x :: _ ->
       cp $"\frUnrecognized argument \fo{x}\f0"
@@ -64,7 +69,8 @@ let run args =
     RepeatCount = 1
     SourceFile = null
     MinLength = 4
-    MinBits = 4.0
+    MinBits = 10.0
+    MaxBits = 60.0
   }
   match oo with
   | Some(o) -> 
