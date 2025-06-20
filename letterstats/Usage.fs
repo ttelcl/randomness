@@ -28,7 +28,7 @@ let usage detail =
   cp "[\fg-1\f0] [\fg-ml\f0 <\fccount\f0>]"
   cp "  Combine and filter word count lists"
   cp "  \fg-o\f0 <\fcout.words.csv\f0> The output file."
-  cp "  \fg+\f0 <\fcin.words.csv\f0>   Input file (repeatable)."
+  cp "  \fg+\f0 <\fcin.words.csv\f0>   Input file (repeatable). Allows wildcards in file name."
   cp "  \fg-ml\f0 <\fccount\f0>        Minimum length of input words."
   cp "  \fg-1\f0\fx\fx                 Replace all output word counts with '1'"
   cp ""

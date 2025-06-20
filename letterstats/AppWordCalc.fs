@@ -18,10 +18,18 @@ type private Options = {
   MinLength: int
 }
 
+let private expandFiles fnm =
+  let fnm = Path.Combine(Environment.CurrentDirectory, fnm)
+  let folder = fnm |> Path.GetDirectoryName
+  let file = fnm |> Path.GetFileName
+  Directory.GetFiles(folder, file)  
+
 let private runWordCalc o =
   let wcm = new WordCountMap()
   for infile in o.InFiles do
-    wcm.AddFile(infile, true, o.MinLength)
+    for file in infile |> expandFiles do
+      cp $"Adding \fg{file}\f0..."
+      wcm.AddFile(file, true, o.MinLength)
   if o.One then
     wcm.ResetCounts()
   let tmpName = o.OutFile + ".tmp"
