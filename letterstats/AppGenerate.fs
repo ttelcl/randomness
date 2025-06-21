@@ -65,8 +65,7 @@ let private runGenerate o =
     let phrase, bits = 
       wordpairStream
       |> Seq.scan phraseGrowFolder ([], 0.0) // infinite stream of ever growing phrases
-      |> Seq.filter (fun (_,f) -> f >= phraseBits)
-      |> Seq.head
+      |> Seq.find (fun (_,f) -> f >= phraseBits)
     // debug mode - only one phrase
     let phraseLine = String.Join("\fy-\fg", phrase)
     cp $"\fg{phraseLine}\f0 (\fb{bits:F1}\f0 bits)"
