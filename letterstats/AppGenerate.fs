@@ -10,6 +10,10 @@ open RandomUtilities.WordCounts
 open ColorPrint
 open CommonTools
 
+type private PhraseMode =
+  | Word
+  | Phrase of MinTotalBits: float
+
 type private GenerateOptions = {
   RepeatCount: int
   SourceFile: string
@@ -19,6 +23,7 @@ type private GenerateOptions = {
   MinLetterBits: float
   BlackList: WordCountMap
   ShowInfo: bool
+  Phrasing: PhraseMode
 }
 
 let private wordFilter o ((s: string),f) =
@@ -38,18 +43,34 @@ let private runGenerate o =
     |> LetterDistribution.FromDto
   if dist.Order < 1 then
     failwith "The minimum supported distribution order is 1"
-  let wordpairs =
+  let wordpairStream = // infinite stream of words matching the settings
     Seq.initInfinite (fun i -> dist.RandomWord(randombits))
     |> Seq.filter (wordFilter o)
-    |> Seq.truncate o.RepeatCount
-  for (word,surprisal) in wordpairs do
-    let surprisalPerLetter = surprisal / float(word.Length)
-    cpx $"\fg{word,-20}\f0"
-    if o.ShowInfo then
-      cp $" (\fb{surprisal:F1}\f0 bits, \fc{surprisalPerLetter:F2}\f0 per letter)"
-    else
-      cp ""
-  0
+  match o.Phrasing with
+  | PhraseMode.Word ->
+    let wordpairs =
+      wordpairStream
+      |> Seq.truncate o.RepeatCount
+    for (word,surprisal) in wordpairs do
+      let surprisalPerLetter = surprisal / float(word.Length)
+      if o.ShowInfo then
+        cpx $"\fg{word,-20}\f0"
+        cp $" (\fb{surprisal:F1}\f0 bits, \fc{surprisalPerLetter:F2}\f0 per letter)"
+      else
+        cp $"\fg{word}\f0"
+    0
+  | PhraseMode.Phrase(phraseBits) ->
+    let phraseGrowFolder (stateList, stateBits) (word: string, wordBits:float) =
+      (word :: stateList), (stateBits + wordBits)
+    let phrase, bits = 
+      wordpairStream
+      |> Seq.scan phraseGrowFolder ([], 0.0) // infinite stream of ever growing phrases
+      |> Seq.filter (fun (_,f) -> f >= phraseBits)
+      |> Seq.head
+    // debug mode - only one phrase
+    let phraseLine = String.Join("\fy-\fg", phrase)
+    cp $"\fg{phraseLine}\f0 (\fb{bits:F1}\f0 bits)"
+    0
 
 let run args =
   let rec parseMore o args =
@@ -78,6 +99,9 @@ let run args =
         None
     | "-info" :: rest ->
       rest |> parseMore {o with ShowInfo = true}
+    | "-bits" :: totalBitsText :: rest ->
+      let totalBits = totalBitsText |> Double.Parse
+      rest |> parseMore {o with Phrasing = PhraseMode.Phrase(totalBits)}
     | "-f" :: fileName :: rest ->
       if fileName |> File.Exists |> not then
         failwith $"File not found: {fileName}"
@@ -102,6 +126,7 @@ let run args =
     MaxBits = 60.0
     BlackList = new WordCountMap()
     ShowInfo = false
+    Phrasing = PhraseMode.Word
   }
   match oo with
   | Some(o) -> 
