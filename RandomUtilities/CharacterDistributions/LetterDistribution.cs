@@ -45,9 +45,11 @@ public class LetterDistribution
         throw new InvalidOperationException(
           $"The prefix '{prefix}' is not valid for use with this alphabet");
       }
-      var total = 0;
+      var cumulative = 0;
       var cells = new List<LetterCountCell>();
-      foreach(var kvp2 in kvp1.Value)
+      var letterCountPairs = kvp1.Value.ToList();
+      var total = letterCountPairs.Sum(kvp => kvp.Value);
+      foreach(var kvp2 in letterCountPairs)
       {
         if(kvp2.Value > 0)
         {
@@ -58,8 +60,8 @@ public class LetterDistribution
             throw new InvalidOperationException(
               $"The letter '{key}' is not valid for use with this alphabet");
           }
-          var cell = new LetterCountCell(key, kvp2.Value, prefix, total);
-          total = cell.Cumulative;
+          var cell = new LetterCountCell(key, kvp2.Value, prefix, cumulative, total);
+          cumulative = cell.Cumulative;
           cells.Add(cell);
         }
       }
@@ -94,15 +96,17 @@ public class LetterDistribution
   /// Generate a randon word using this distribution and the
   /// random bit source
   /// </summary>
-  public string RandomWord(BitSource bitSource)
+  public string RandomWord(BitSource bitSource, out double surprisal)
   {
     var context = Seed;
     var sb = new StringBuilder();
     LetterCountCell cell;
+    surprisal = 0.0;
     do
     {
       cell = RandomCell(bitSource, context);
       context = cell.NextPrefix;
+      surprisal += cell.Surprisal;
       if(cell.Letter == Alphabet.Boundary)
       {
         return sb.ToString();
