@@ -12,6 +12,8 @@
     <None Remove="WordLists\adjectives.wordlist.txt" />
     <None Remove="WordLists\animals.wordlist.txt" />
     <None Remove="WordLists\colors.wordlist.txt" />
+    <None Remove="WordLists\combo.3.word-fragments.json" />
+    <None Remove="WordLists\combo.words.csv" />
     <None Remove="WordLists\flowers.wordlist.txt" />
     <None Remove="WordLists\fruitcolors.wordlist.txt" />
     <None Remove="WordLists\fruits.wordlist.txt" />
@@ -31,6 +33,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="WordLists\animals.wordlist.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="WordLists\combo.3.word-fragments.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="WordLists\combo.words.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="WordLists\plants.wordlist.txt">
