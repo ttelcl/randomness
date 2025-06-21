@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Text
 
 open RandomUtilities.ByteSources
 open RandomUtilities.CharacterDistributions
@@ -25,6 +26,7 @@ type private GenerateOptions = {
   ShowInfo: bool
   Phrasing: PhraseMode
   Capitalize: bool
+  Digits: int
 }
 
 type private PhraseBuildState = {
@@ -75,11 +77,11 @@ let private runGenerate o =
     |> LetterDistribution.FromDto
   if dist.Order < 1 then
     failwith "The minimum supported distribution order is 1"
-  let wordpairStream = // infinite stream of words matching the settings
-    Seq.initInfinite (fun i -> dist.RandomWord(randombits))
-    |> Seq.filter (wordFilter o)
   match o.Phrasing with
   | PhraseMode.Word ->
+    let wordpairStream = // infinite stream of words matching the settings
+      Seq.initInfinite (fun i -> dist.RandomWord(randombits))
+      |> Seq.filter (wordFilter o)
     let wordpairs =
       wordpairStream
       |> Seq.truncate o.RepeatCount
@@ -97,9 +99,16 @@ let private runGenerate o =
         cp $"\fg{word}\f0"
     0
   | PhraseMode.Phrase(phraseBits) ->
+    let oneDigitBits = log(10.0) / log(2.0)
+    let digitBits = oneDigitBits * float(o.Digits)
+    let digitStream =
+      Seq.initInfinite (fun _ -> char(int('0') + randombits.RandomInteger(9, 0)))
+    let wordpairStream = // infinite stream of words matching the settings
+      Seq.initInfinite (fun i -> dist.RandomWord(randombits))
+      |> Seq.filter (wordFilter o)
     let phrases =
       wordpairStream
-      |> phraseGenerator phraseBits
+      |> phraseGenerator (phraseBits-digitBits)
       |> Seq.truncate o.RepeatCount
     for phrase in phrases do
       let words =
@@ -111,8 +120,14 @@ let private runGenerate o =
         else
           phrase.PhraseList
       let phraseLine = String.Join("\fy-\fg", words)
+      let phraseLine =
+        if o.Digits > 0 then
+          let digits = digitStream |> Seq.take o.Digits |> Seq.toArray
+          phraseLine + "\fy-\fc" + new String(digits)
+        else
+          phraseLine
       if o.ShowInfo then
-        cp $"(\fb{phrase.TotalBits:F1}\f0 bits) \t\fg{phraseLine}\f0"
+        cp $"(\fb{phrase.TotalBits+digitBits:F1}\f0 bits) \t\fg{phraseLine}\f0"
       else
         cp $"\fg{phraseLine}\f0"
     0
@@ -142,10 +157,15 @@ let run args =
       else
         cp $"\foFile not found\f0: {fileName}"
         None
+    | "-d" :: digits :: rest
+    | "-digits" :: digits :: rest ->
+      rest |> parseMore {o with Digits = digits |> Int32.Parse}
     | "-info" :: rest ->
       rest |> parseMore {o with ShowInfo = true}
     | "-C" :: rest ->
       rest |> parseMore {o with Capitalize = true}
+    | "-nc" :: rest ->
+      rest |> parseMore {o with Capitalize = false}
     | "-bits" :: totalBitsText :: rest ->
       let totalBits = totalBitsText |> Double.Parse
       rest |> parseMore {o with Phrasing = PhraseMode.Phrase(totalBits)}
@@ -155,6 +175,25 @@ let run args =
       if ".word-fragments.json" |> fileName.EndsWith |> not then
         failwith $"Expecting file name to end with '.word-fragments.json'"
       rest |> parseMore {o with SourceFile = fileName}
+    | "-std" :: rest
+    | "-standard" :: rest
+    | "-defaults" :: rest
+    | "-default" :: rest ->
+      let resFolder = "WordLists" |> getResourceFileName
+      let distributionFile = Path.Combine(resFolder, "combo.3.word-fragments.json")
+      let blacklistFile = Path.Combine(resFolder, "combo.words.csv")
+      o.BlackList.AddFile(blacklistFile, false)
+      let o =
+        {o with
+          SourceFile = distributionFile
+          MinLetterBits = 2.5
+          Capitalize = true
+          MinBits = 18.0
+          MaxBits = 25.0
+          Digits = 2
+          MinLength = 5
+        }
+      rest |> parseMore o
     | [] ->
       if o.SourceFile |> String.IsNullOrEmpty then
         failwith "No file name specified"
@@ -175,6 +214,7 @@ let run args =
     ShowInfo = false
     Phrasing = PhraseMode.Word
     Capitalize = false
+    Digits = 0
   }
   match oo with
   | Some(o) -> 

@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Reflection
 open System.Threading
 
 open ColorPrint
@@ -121,4 +122,15 @@ let private consoleCancelToken =
 /// aborting the program.)
 let canceled =
   fun () -> consoleCancelToken.IsCancellationRequested
+
+/// Resolves a file name relative to the main executable's folder
+let getResourceFileName relativeName =
+  let asm = Assembly.GetEntryAssembly()
+  if asm = null then
+    failwith "Error locating resource file folder"
+  let location = Path.GetDirectoryName(asm.Location)
+  if location |> String.IsNullOrEmpty then
+    failwith "Error locating resource file folder"
+  let resourceFolder = Path.Combine(location, relativeName)
+  resourceFolder
 
