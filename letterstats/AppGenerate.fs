@@ -3,9 +3,9 @@
 open System
 open System.IO
 
-open RandomUtilities.CharacterDistributions
-open RandomUtilities.WordLists
 open RandomUtilities.ByteSources
+open RandomUtilities.CharacterDistributions
+open RandomUtilities.WordCounts
 
 open ColorPrint
 open CommonTools
@@ -16,7 +16,19 @@ type private GenerateOptions = {
   MinLength: int
   MinBits: float
   MaxBits: float
+  MinLetterBits: float
+  BlackList: WordCountMap
+  ShowInfo: bool
 }
+
+let private wordFilter o ((s: string),f) =
+  let len = s.Length
+  let letterBits = f / float(len)
+  len >= o.MinLength
+  && f >= o.MinBits
+  && f <= o.MaxBits
+  && letterBits >= o.MinLetterBits
+  && o.BlackList[s] = 0
 
 let private runGenerate o =
   let randombits = ByteSource.Random().Buffered().ToBitSource()
@@ -28,10 +40,15 @@ let private runGenerate o =
     failwith "The minimum supported distribution order is 1"
   let wordpairs =
     Seq.initInfinite (fun i -> dist.RandomWord(randombits))
-    |> Seq.filter (fun (s,f) -> s.Length >= o.MinLength && f >= o.MinBits && f <= o.MaxBits)
+    |> Seq.filter (wordFilter o)
     |> Seq.truncate o.RepeatCount
   for (word,surprisal) in wordpairs do
-    cp $"(\fb{surprisal:F1}\f0 bits) \fg{word}\f0"
+    let surprisalPerLetter = surprisal / float(word.Length)
+    cpx $"\fg{word,-20}\f0"
+    if o.ShowInfo then
+      cp $" (\fb{surprisal:F1}\f0 bits, \fc{surprisalPerLetter:F2}\f0 per letter)"
+    else
+      cp ""
   0
 
 let run args =
@@ -48,8 +65,19 @@ let run args =
       rest |> parseMore {o with MinLength = minLength |> Int32.Parse}
     | "-mb" :: minBits :: rest ->
       rest |> parseMore {o with MinBits = minBits |> Double.Parse}
+    | "-mbl" :: minBits :: rest ->
+      rest |> parseMore {o with MinLetterBits = minBits |> Double.Parse}
     | "-xb" :: maxBits :: rest ->
       rest |> parseMore {o with MaxBits = maxBits |> Double.Parse}
+    | "-bl" :: fileName :: rest ->
+      if fileName |> File.Exists then
+        o.BlackList.AddFile(fileName, false)
+        rest |> parseMore o
+      else
+        cp $"\foFile not found\f0: {fileName}"
+        None
+    | "-info" :: rest ->
+      rest |> parseMore {o with ShowInfo = true}
     | "-f" :: fileName :: rest ->
       if fileName |> File.Exists |> not then
         failwith $"File not found: {fileName}"
@@ -70,7 +98,10 @@ let run args =
     SourceFile = null
     MinLength = 4
     MinBits = 10.0
+    MinLetterBits = 0.0
     MaxBits = 60.0
+    BlackList = new WordCountMap()
+    ShowInfo = false
   }
   match oo with
   | Some(o) -> 

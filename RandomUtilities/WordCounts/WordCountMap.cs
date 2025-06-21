@@ -25,7 +25,7 @@ public class WordCountMap
   /// </summary>
   public WordCountMap()
   {
-    _wordCounts = new Dictionary<string, int>();
+    _wordCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
   }
 
   /// <summary>
@@ -95,6 +95,12 @@ public class WordCountMap
       _wordCounts[word] = 1;
     }
   }
+
+  /// <summary>
+  /// Return the word count for the given word (0 if not found)
+  /// </summary>
+  public int this[string word] => 
+    _wordCounts.TryGetValue(word, out var value) ? value : 0;
 
   /// <summary>
   /// Save this map to a *.words.csv file
