@@ -24,7 +24,39 @@ type private GenerateOptions = {
   BlackList: WordCountMap
   ShowInfo: bool
   Phrasing: PhraseMode
+  Capitalize: bool
 }
+
+type private PhraseBuildState = {
+  PhraseList: string list
+  TotalBits: float
+}
+
+let private phraseBuildStartState = {
+  PhraseList=[]
+  TotalBits=0.0
+}
+
+let capitalize (word: string) =
+  let firstLetter = word[0] |> Char.ToUpperInvariant
+  firstLetter.ToString() + word.Substring(1)
+
+let private phraseBuildStep minBits builder (word, bits) =
+  let newState = {
+    builder with
+      PhraseList = word :: builder.PhraseList
+      TotalBits = builder.TotalBits + bits}
+  if newState.TotalBits >= minBits then
+    phraseBuildStartState, Some(newState)
+  else
+    newState, None
+
+let private phraseGenerator minBits source =
+  source
+  |> Seq.scan
+    (fun (builder, _) t -> phraseBuildStep minBits builder t)
+    (phraseBuildStartState, None)
+  |> Seq.choose (fun (_, output) -> output)
 
 let private wordFilter o ((s: string),f) =
   let len = s.Length
@@ -53,6 +85,11 @@ let private runGenerate o =
       |> Seq.truncate o.RepeatCount
     for (word,surprisal) in wordpairs do
       let surprisalPerLetter = surprisal / float(word.Length)
+      let word =
+        if o.Capitalize then
+          word |> capitalize
+        else
+          word
       if o.ShowInfo then
         cpx $"\fg{word,-20}\f0"
         cp $" (\fb{surprisal:F1}\f0 bits, \fc{surprisalPerLetter:F2}\f0 per letter)"
@@ -60,15 +97,24 @@ let private runGenerate o =
         cp $"\fg{word}\f0"
     0
   | PhraseMode.Phrase(phraseBits) ->
-    let phraseGrowFolder (stateList, stateBits) (word: string, wordBits:float) =
-      (word :: stateList), (stateBits + wordBits)
-    let phrase, bits = 
+    let phrases =
       wordpairStream
-      |> Seq.scan phraseGrowFolder ([], 0.0) // infinite stream of ever growing phrases
-      |> Seq.find (fun (_,f) -> f >= phraseBits)
-    // debug mode - only one phrase
-    let phraseLine = String.Join("\fy-\fg", phrase)
-    cp $"\fg{phraseLine}\f0 (\fb{bits:F1}\f0 bits)"
+      |> phraseGenerator phraseBits
+      |> Seq.truncate o.RepeatCount
+    for phrase in phrases do
+      let words =
+        if o.Capitalize then
+          match phrase.PhraseList with
+          | head :: tail ->
+            (head |> capitalize) :: tail
+          | [] -> []
+        else
+          phrase.PhraseList
+      let phraseLine = String.Join("\fy-\fg", words)
+      if o.ShowInfo then
+        cp $"(\fb{phrase.TotalBits:F1}\f0 bits) \t\fg{phraseLine}\f0"
+      else
+        cp $"\fg{phraseLine}\f0"
     0
 
 let run args =
@@ -98,6 +144,8 @@ let run args =
         None
     | "-info" :: rest ->
       rest |> parseMore {o with ShowInfo = true}
+    | "-C" :: rest ->
+      rest |> parseMore {o with Capitalize = true}
     | "-bits" :: totalBitsText :: rest ->
       let totalBits = totalBitsText |> Double.Parse
       rest |> parseMore {o with Phrasing = PhraseMode.Phrase(totalBits)}
@@ -126,6 +174,7 @@ let run args =
     BlackList = new WordCountMap()
     ShowInfo = false
     Phrasing = PhraseMode.Word
+    Capitalize = false
   }
   match oo with
   | Some(o) -> 
