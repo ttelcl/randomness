@@ -34,6 +34,9 @@ let rec run arglist =
     rest |> AppWords.run
   | "wordlets" :: rest ->
     rest |> AppWordlets.run
+  | "blob" :: rest
+  | "blobs" :: rest ->
+    rest |> AppBlob.run
   | x :: _ ->
     cp $"\frUnrecognized command \fo{x}\f0."
     1

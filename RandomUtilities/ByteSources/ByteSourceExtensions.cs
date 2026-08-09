@@ -6,6 +6,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -406,4 +407,49 @@ public static class ByteSourceExtensions
     var idx = randomSource.RandomInteger(samples.Count-1, 0);
     return samples[idx];
   }
+
+
+  /// <summary>
+  /// Push <paramref name="byteCount"/> random bytes from <paramref name="source"/> into
+  /// <paramref name="stream"/>.
+  /// </summary>
+  /// <param name="source">
+  /// The byte source to read from
+  /// </param>
+  /// <param name="stream">
+  /// The (binary) stream to write the bytes to
+  /// </param>
+  /// <param name="byteCount">
+  /// The number of bytes to copy
+  /// </param>
+  /// <param name="blockSize">
+  /// Bytes are copied in blocks. This parameter provides the size of block used.
+  /// Defaults to 1024.
+  /// </param>
+  /// <exception cref="ArgumentOutOfRangeException"></exception>
+  public static void PushToStream(this ByteSource source, Stream stream, int byteCount, int blockSize = 1024)
+  {
+    if(blockSize < 1)
+    {
+      throw new ArgumentOutOfRangeException(
+        nameof(blockSize), "block size must be at least 1");
+    }
+    var bytesPushed = 0;
+    var block = new byte[blockSize];
+    while(bytesPushed < byteCount)
+    {
+      var n = byteCount - bytesPushed;
+      Span<byte> span = block;
+      if(n > blockSize)
+      {
+        n = blockSize;
+        span = span.Slice(0, n);
+      }
+      source.ReadBytes(span);
+      stream.Write(block, 0, n);
+      bytesPushed += n;
+    }
+    Array.Clear(block, 0, block.Length);
+  }
+
 }
