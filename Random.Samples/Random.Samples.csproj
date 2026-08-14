@@ -21,6 +21,10 @@
     <None Remove="WordLists\plants.wordlist.txt" />
     <None Remove="WordLists\sizes.wordlist.txt" />
     <None Remove="WordLists\trees.wordlist.txt" />
+    <None Remove="WordLists\us-combo.wordlist.txt" />
+    <None Remove="WordLists\us-long.wordlist.txt" />
+    <None Remove="WordLists\us-medium.wordlist.txt" />
+    <None Remove="WordLists\us-short.wordlist.txt" />
     <None Remove="WordLists\vehicles.wordlist.txt" />
     <None Remove="WordLists\words.wordlist.txt" />
   </ItemGroup>
@@ -63,6 +67,18 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="WordLists\sizes.wordlist.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="WordLists\us-combo.wordlist.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="WordLists\us-long.wordlist.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="WordLists\us-medium.wordlist.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="WordLists\us-short.wordlist.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="WordLists\vehicles.wordlist.txt">

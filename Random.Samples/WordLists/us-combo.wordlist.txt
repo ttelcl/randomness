@@ -1,0 +1,7 @@
+﻿# Combines the us-long, us-medium, us-short lists
+# recreating google-10000-english-no-swears.txt
+# Original source: https://github.com/first20hours/google-10000-english
+
+{us-short}
+{us-medium}
+{us-long}
