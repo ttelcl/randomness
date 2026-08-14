@@ -77,15 +77,20 @@ let run args =
       rest |> parseMore o
     | "-h" :: _ ->
       None
-    | "-listlists" :: _ ->
+    | "-listlists" :: _ 
+    | "-ll" :: _ 
+    | "-lists" :: _ ->
       Some({o with ListLists = true})
-    | "-list" :: expression :: rest ->
+    | "-list" :: expression :: rest 
+    | "-l" :: expression :: rest 
+    | "-wl" :: expression :: rest ->
       let wl = expression |> listLoader wlc
       rest |> parseMore {o with WordLists = wl :: o.WordLists}
     | "-n" :: countText :: rest ->
       let n = countText |> Int32.Parse
       rest |> parseMore {o with Repeat = n}
-    | "-bits" :: bitText :: rest ->
+    | "-bits" :: bitText :: rest
+    | "-b" :: bitText :: rest ->
       let bits = bitText |> Int32.Parse
       rest |> parseMore {o with TargetBits = bits}
     | [] ->
