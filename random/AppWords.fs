@@ -93,6 +93,8 @@ let run args =
     | "-b" :: bitText :: rest ->
       let bits = bitText |> Int32.Parse
       rest |> parseMore {o with TargetBits = bits}
+    | "-s" :: rest ->
+      rest |> parseMore {o with Separator = " "}
     | [] ->
       if o.WordLists |> List.isEmpty then
         cp "\frNo word list(s) specified\f0."
