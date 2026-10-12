@@ -13,9 +13,11 @@ let rec run arglist =
     verbose <- true
     rest |> run
   | "--help" :: _
-  | "-h" :: _
+  | "-h" :: _ ->
+    usage "*"
+    0  // program return status code to the operating system; 0 == "OK"
   | [] ->
-    usage "all"
+    usage ""
     0  // program return status code to the operating system; 0 == "OK"
   | "guid" :: rest ->
     rest |> AppGuid.run
@@ -37,6 +39,10 @@ let rec run arglist =
   | "blob" :: rest
   | "blobs" :: rest ->
     rest |> AppBlob.run
+  | "integer" :: rest
+  | "number" :: rest
+  | "int" :: rest ->
+    rest |> AppInteger.run
   | x :: _ ->
     cp $"\frUnrecognized command \fo{x}\f0."
     1
